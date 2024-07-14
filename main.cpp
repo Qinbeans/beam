@@ -32,6 +32,10 @@ int main(void) {
         state_tracker
     );
 
+    /**
+     * Menu:
+     * (2) Play
+    */
     State state1(
         0,
         "Main Menu",
@@ -45,6 +49,11 @@ int main(void) {
         font
     );
 
+    /**
+     * Choices:
+     * (3a) Look around
+     * (3b) Panic
+     */
     State state2(
         1,
         "Play",
@@ -58,6 +67,11 @@ int main(void) {
         font
     );
 
+    /**
+     * Choices:
+     * (4a) Look at the map
+     * (4b) Open the door
+     */
     State state3a(
         2,
         "Look around",
@@ -71,10 +85,11 @@ int main(void) {
         font
     );
 
+    // Dead end
     State state3b(
         3,
         "Panic",
-        "You panic and run\naround the room.",
+        "You panic and run\naround the room.\nYou trip over a piece\nof furniture and fall.\nYou lose consciousness\nwhile slowly bleeding out.\n\nYou died.",
         Vector2{10, 10},
         Vector2{400,100},
         Theme::BG,
@@ -84,6 +99,10 @@ int main(void) {
         font
     );
 
+    /**
+     * Choices:
+     * (4a) Open the door
+     */
     State state4a(
         4,
         "Look at the map",
@@ -97,10 +116,16 @@ int main(void) {
         font
     );
 
+    /**
+     * Choices:
+     * (5) Look around
+     * (5a) Left
+     * (5b) Right
+     */
     State state4b(
         5,
         "Open the door",
-        "You enter a corridor,\nthe door closes behind you.\nThere's a fork in the road:\nleft or right?",
+        "You enter a corridor,\nthe door closes behind\nyou. There's a fork in\nthe road: left or right?",
         Vector2{10, 10},
         Vector2{400,100},
         Theme::BG,
@@ -110,15 +135,81 @@ int main(void) {
         font
     );
 
-    state1 << &state2;
+    // Choices:
+    State state5(
+        6,
+        "Look around",
+        "You find nothing of\ninterest; just the fork\nin the road.",
+        Vector2{10, 10},
+        Vector2{400,100},
+        Theme::BG,
+        Theme::PRIMARY,
+        Padding{2, 10, 2, 10},
+        25,
+        font
+    );
 
-    state2 << &state3a << &state3b;
+    // Choices:
+    State state5a(
+        7,
+        "Left",
+        "You find a chest\nwith a key inside.",
+        Vector2{10, 10},
+        Vector2{400,100},
+        Theme::BG,
+        Theme::PRIMARY,
+        Padding{2, 10, 2, 10},
+        25,
+        font
+    );
+
+    State state5b(
+        8,
+        "Right",
+        "You find a chest\nwith a key inside.",
+        Vector2{10, 10},
+        Vector2{400,100},
+        Theme::BG,
+        Theme::PRIMARY,
+        Padding{2, 10, 2, 10},
+        25,
+        font
+    );
+
+    state1
+        << &state2;
+
+    state2
+        << &state3a
+        << &state3b;
     
-    state3a << &state4a << &state4b;
+    state3a
+        << &state4a
+        << &state4b;
 
-    state3b << &state2;
+    state4a
+        << &state4b;
 
-    manager << &state1 << &state2 << &state3a << &state3b << &state4a << &state4b;
+    state4b
+        << &state5
+        << &state5a
+        << &state5b;
+
+    state5
+        << &state5a
+        << &state5b;
+
+    // Add states to manager for rendering
+    manager
+        << &state1
+        << &state2
+        << &state3a
+        << &state3b
+        << &state4a
+        << &state4b
+        << &state5
+        << &state5a
+        << &state5b;
 
     root << &manager;
     // =============================== Game Objects ===============================
