@@ -2,6 +2,23 @@
 
 This teaches ideas ranging from inheritance to polymorphism. The idea is to get the student accustomed to the idea of creating a class that inherits from another class, and then overriding a method in the child class. In other words I want you to have fun while still being productive.
 
+## Building
+
+`make` can be used on all platforms to build the project.
+
+```bash
+make
+```
+
+For those who know how to use `cmake`, you can use the `CMakeLists.txt` file to generate a project file for your favorite IDE.
+
+```bash
+cmake -B build
+cmake --build build
+# or
+cmake --build build --config Release
+```
+
 ## The Game
 
 The game already has some basic examples of how to get started. There's one instance of something called `Text` which drags a piece of text across the screen. You must create your own game that achieves what we did in the previous project, but with 2D graphics.
