@@ -216,6 +216,8 @@ int main(void) {
 
     root.init();
 
+    root.debug();
+
     try {
         while (!WindowShouldClose()) {
             // Update

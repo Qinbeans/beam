@@ -21,3 +21,13 @@ void Manager::draw() {
     }
     states[*state]->draw();
 }
+
+void Manager::debug() {
+    if (!initialized) {
+        throw NodeException(getId(),"Manager not initialized: debug() called before init()");
+    }
+    std::cout << "Manager[" << id << "] state(" << *state << ") parent(" << parent->getId() << ")" << std::endl;
+    for (shared_ptr<Frame> state : states) {
+        state->debug();
+    }
+}

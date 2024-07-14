@@ -31,6 +31,7 @@ class Event: public Node{
         void init() override;
         void update() override;
         void draw() override;
+        void debug() override;
 };
 
 #endif // EVENT_H

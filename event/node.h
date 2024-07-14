@@ -89,6 +89,13 @@ class Node {
         virtual void unsetParent() {
             parent = nullptr;
         }
+        virtual void debug() {
+            if (parent != nullptr) {
+                std::cout << getType() << "[" << id << "] parent(" << parent->getId() << ")" << std::endl;
+            } else {
+                std::cout << getType() << "[" << id << "] has no parent" << std::endl;
+            }
+        }
 };
 
 #endif // NODE_H

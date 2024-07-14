@@ -51,3 +51,10 @@ void State::draw() {
         button->draw();
     }
 }
+
+void State::debug() {
+    std::cout << "State[" << state_id << "] name(" << name << ") parent(" << parent->getId() << ")" << std::endl;
+    for (auto button: buttons) {
+        button->debug();
+    }
+}

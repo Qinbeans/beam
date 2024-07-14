@@ -40,3 +40,13 @@ void Frame::draw() {
         children[i]->draw();
     }
 }
+
+void Frame::debug() {
+    if (!initialized) {
+        throw NodeException(getId(),"Frame not initialized: debug() called before init()");
+    }
+    std::cout << "Frame[" << id << "] parent(" << parent->getId() << ")" << std::endl;
+    for (int i = 0; i < children.size(); i++) {
+        children[i]->debug();
+    }
+}

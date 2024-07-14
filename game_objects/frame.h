@@ -29,7 +29,7 @@ class Frame: public Object {
         void draw() override;
         void init() override;
         void update() override;
-
+        void debug() override;
         friend Frame& operator<<(Frame& frame, Node* node) {
             frame.children.push_back(shared_ptr<Node>(node));
             node->setParent(shared_ptr<Node>(&frame));
