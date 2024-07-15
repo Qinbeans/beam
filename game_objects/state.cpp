@@ -52,9 +52,9 @@ void State::draw() {
     }
 }
 
-void State::debug() {
-    std::cout << "State[" << state_id << "] name(" << name << ") parent(" << parent->getId() << ")" << std::endl;
+void State::debug(Debug &debug) {
+    debug << "State[" << state_id << "] name(" << name << ") parent(" << parent->getId() << ")" << std::endl;
     for (auto button: buttons) {
-        button->debug();
+        button->debug(debug);
     }
 }

@@ -12,6 +12,12 @@ set(GAME_OBJECTS_DIR ${OBJECTS_DIR}/game_objects)
 # Include directories
 include_directories(include)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_definitions(-DDEBUG)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-DRELEASE)
+endif()
+
 # Platform-specific settings
 if(WIN32)
     set(TARGET main)

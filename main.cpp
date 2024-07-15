@@ -23,6 +23,8 @@ int main(void) {
     // Font font = LoadFont("assets/fonts/Hack-Regular.ttf");
     Font font = LoadFontEx("assets/fonts/Hack-Regular.ttf", 20, 0, 250);
 
+    Debug debug;
+
     // =============================== Game Objects ===============================
     Event root(
         "Root"
@@ -216,8 +218,10 @@ int main(void) {
 
     root.init();
 
-    root.debug();
-
+    #ifdef DEBUG
+        root.debug(debug);
+    #endif
+    
     try {
         while (!WindowShouldClose()) {
             // Update

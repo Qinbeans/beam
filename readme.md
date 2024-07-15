@@ -19,6 +19,10 @@ cmake --build build
 cmake --build build --config Release
 ```
 
+## Visualizing the project
+
+There's a directory named `scripts` containing a Jupiter notebook that can be used to visualize the project. This will produce a graph of the States/Scenarios.
+
 ## The Game
 
 The game already has some basic examples of how to get started. There's one instance of something called `Text` which drags a piece of text across the screen. You must create your own game that achieves what we did in the previous project, but with 2D graphics.

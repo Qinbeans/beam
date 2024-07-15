@@ -6,6 +6,7 @@
 #include <string>
 #include <raylib.h>
 #include <memory>
+#include "../debug.h"
 
 using std::string;
 using std::exception;
@@ -89,13 +90,15 @@ class Node {
         virtual void unsetParent() {
             parent = nullptr;
         }
-        virtual void debug() {
+        // #ifdef DEBUG
+        virtual void debug(Debug &debug) {
             if (parent != nullptr) {
-                std::cout << getType() << "[" << id << "] parent(" << parent->getId() << ")" << std::endl;
+                debug << getType() << "[" << id << "] parent(" << parent->getId() << ")" << std::endl;
             } else {
-                std::cout << getType() << "[" << id << "] has no parent" << std::endl;
+                debug << getType() << "[" << id << "] has no parent" << std::endl;
             }
         }
+        // #endif
 };
 
 #endif // NODE_H

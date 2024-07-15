@@ -28,6 +28,11 @@ ifeq ($(OS),Linux)
     lflags = -Llib/linux -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
 endif
 
+# if DEBUG is defined, add debug flags
+ifeq ($(DEBUG),1)
+	cflags += -g -DDEBUG
+endif
+
 .PHONY: all clean run archive
 
 all: main

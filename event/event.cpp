@@ -60,16 +60,16 @@ void Event::draw() {
     }
 }
 
-void Event::debug() {
+void Event::debug(Debug &debug) {
     if (!initialized) {
         throw NodeException(getId(),"Event not initialized: debug() called before init()");
     }
     if (parent) {
-        std::cout << "Event[" << id << "] parent(" << parent->getId() << ") name(" << name << ")" << std::endl;
+        debug << "Event[" << id << "] parent(" << parent->getId() << ") name(" << name << ")" << std::endl;
     } else {
-        std::cout << "Event[" << id << "] name(" << name << ")" << std::endl;
+        debug << "Event[" << id << "] name(" << name << ")" << std::endl;
     }
     for (Object* object : objects) {
-        object->debug();
+        object->debug(debug);
     }
 }

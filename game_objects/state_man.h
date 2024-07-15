@@ -26,7 +26,7 @@ class Manager: public Object {
         void init() override;
         void update() override;
         void draw() override;
-        void debug() override;
+        void debug(Debug &debug) override;
         friend Manager& operator<<(Manager& manager, Frame* frame) {
             manager.states.push_back(shared_ptr<Frame>(frame));
             frame->setParent(shared_ptr<Node>(&manager));

@@ -2,3 +2,5 @@ build
 .vscode
 game2.tar.gz
 .cache
+.venv
+debug.log

@@ -32,7 +32,7 @@ class State: public Frame {
         void init() override;
         void update() override;
         void draw() override;
-        void debug() override;
+        void debug(Debug &debug) override;
         friend State& operator<<(State& state, State* state2) {
             // create a new button that sets the state to the given state by id
             state.lastButtonPosition.y += state.spacing;
