@@ -19,6 +19,6 @@ private:
   AssetData data;
 
 public:
-  template <typename T> operator T &() { return *reinterpret_cast<T *>(&data); }
+  template <typename T> T *into() { return reinterpret_cast<T *>(&data); }
 };
 } // namespace beam

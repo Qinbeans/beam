@@ -4,6 +4,7 @@
 #include "beam/core/manager.h"
 #include "beam/core/node.h"
 #include <memory>
+#include <vector>
 
 namespace beam {
 

@@ -1,7 +1,6 @@
 // App.hpp
 #pragma once
 
-#include "beam/core/asset.h"
 #include "beam/core/event.h"
 #include "beam/core/manager.h"
 #include "beam/scene/scene_manager.h"

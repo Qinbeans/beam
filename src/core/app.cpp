@@ -2,6 +2,7 @@
 // App.cpp
 #include "beam/core/app.h"
 #include "beam/core/manager.h"
+#include "raylib.h"
 #include <memory>
 
 namespace beam {
@@ -12,6 +13,8 @@ App::App(const std::string &windowTitle, int windowWidth, int windowHeight,
       targetFPS(fps) {
   InitWindow(width, height, title.c_str());
   SetTargetFPS(targetFPS);
+
+  SetExitKey(KEY_NULL);
 
   rootEvent = std::make_shared<Event>("Root");
   sceneManager = std::make_shared<SceneManager>();
@@ -26,7 +29,7 @@ Event &App::getEvent() { return *rootEvent; }
 SceneManager &App::getSceneManager() { return *sceneManager; }
 
 void App::run() {
-  while (!WindowShouldClose()) {
+  while (!WindowShouldClose() && !manager->closed()) {
     float deltaTime = GetFrameTime();
 
     // Update

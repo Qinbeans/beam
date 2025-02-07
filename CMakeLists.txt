@@ -46,6 +46,7 @@ set(BEAM_SCENE_SOURCES
 set(BEAM_OBJECTS_SOURCES
     src/objects/game_object.cpp
     src/objects/text.cpp
+    src/objects/button.cpp
 )
 
 # Create library
@@ -111,6 +112,7 @@ install(TARGETS beam raylib glfw
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_BINARY_DIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/raylib
 )
 
 # Install headers

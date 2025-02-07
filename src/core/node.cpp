@@ -1,6 +1,5 @@
 // src/core/Node.cpp
 #include "beam/core/node.h"
-#include <algorithm>
 
 namespace beam {
 

@@ -2,9 +2,9 @@
 
 #include "beam/core/app.h"
 #include "beam/core/manager.h"
+#include "beam/objects/button.h"
 #include "beam/objects/text.h"
 #include "raylib.h"
-#include <any>
 #include <iostream>
 
 using namespace beam;
@@ -74,8 +74,15 @@ int main() {
 
   // Add standalone text to root event
   Event &root = app.getEvent();
-  auto text = std::make_shared<Text>("Press ESC to exit", 10, 10, 20);
-  root << text;
+
+  // create an exit button
+  auto exitButton = std::make_shared<Button>(
+      "Exit", 20, Vector2{700, 500}, Vector2{100, 50}, Padding{10, 10, 10, 10},
+      RED, WHITE, MAROON, WHITE);
+  exitButton->onClick(
+      [&](Button *, SharedManager manager) { manager->close(); });
+
+  root << exitButton;
 
   app.run();
 

@@ -1,6 +1,5 @@
 // Scene.cpp
 #include "beam/scene/scene.h"
-#include <memory>
 
 namespace beam {
 

@@ -1,10 +1,7 @@
 
 // src/core/Event.cpp
 #include "beam/core/event.h"
-#include "beam/core/asset.h"
 #include "beam/core/manager.h"
-#include <memory>
-#include <unordered_map>
 
 namespace beam {
 

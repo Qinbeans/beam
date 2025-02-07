@@ -16,12 +16,24 @@ class Manager {
 private:
   AssetManager assets;
   StateManager states;
+  bool isclosed = false;
 
 public:
-  Manager() = default;
+  Manager() {
+    assets = AssetManager();
+    states = StateManager();
+    isclosed = false;
+  };
+
+  bool hasAsset(const std::string &name) {
+    if (assets.empty()) {
+      return false;
+    }
+    return assets.find(name) != assets.end();
+  }
 
   template <typename T> T &getAsset(const std::string &name) {
-    return *static_cast<T *>(assets[name].get());
+    return *assets[name]->into<T>();
   }
 
   template <typename T> void setAsset(const std::string &name, T asset) {
@@ -35,6 +47,10 @@ public:
   template <typename T> void setState(const std::string &name, T value) {
     states[name] = value;
   }
+
+  void close() { isclosed = true; }
+
+  bool closed() const { return isclosed; }
 };
 } // namespace beam
 

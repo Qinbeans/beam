@@ -3,6 +3,7 @@
 
 #include "beam/core/manager.h"
 #include "node.h"
+#include <vector>
 
 namespace beam {
 
