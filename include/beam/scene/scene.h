@@ -1,6 +1,7 @@
 // Scene.hpp
 #pragma once
 
+#include "beam/core/manager.h"
 #include "beam/core/node.h"
 #include <memory>
 
@@ -20,11 +21,11 @@ public:
     return *this;
   }
 
-  void update(float deltaTime) override;
-  void draw() override;
+  void update(float, SharedManager) override;
+  void draw(SharedManager) override;
 
-  virtual void onEnter();
-  virtual void onExit();
+  virtual void onEnter(SharedManager);
+  virtual void onExit(SharedManager);
 };
 
 } // namespace beam

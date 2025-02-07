@@ -7,12 +7,12 @@ Text::Text(const std::string &text, float x, float y, int size)
   position = {x, y};
 }
 
-void Text::draw() {
+void Text::draw(SharedManager managers) {
   if (active) {
     DrawText(content.c_str(), static_cast<int>(position.x),
              static_cast<int>(position.y), fontSize, color);
   }
-  Node::draw();
+  Node::draw(managers);
 }
 
 void Text::setText(const std::string &text) { content = text; }

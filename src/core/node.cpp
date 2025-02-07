@@ -5,15 +5,14 @@
 namespace beam {
 
 Node::Node(const std::string &nodeName)
-    : position{0, 0}, active(true), name(nodeName), time(0.0) {}
+    : position{0, 0}, active(true), name(nodeName) {}
 
-void Node::update(float deltaTime) {
+void Node::update(float, SharedManager) {
   if (!active)
     return;
-  time += deltaTime;
 }
 
-void Node::draw() {
+void Node::draw(SharedManager) {
   if (!active)
     return;
 }

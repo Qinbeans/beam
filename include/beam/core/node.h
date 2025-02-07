@@ -1,6 +1,7 @@
 // include/beam/core/Node.hpp
 #pragma once
 
+#include "beam/core/manager.h"
 #include <memory>
 #include <raylib.h>
 #include <string>
@@ -20,14 +21,13 @@ protected:
   Vector2 position;
   bool active;
   std::string name;
-  float time;
 
 public:
   explicit Node(const std::string &nodeName = "Node");
   virtual ~Node() = default;
 
-  virtual void update(float deltaTime);
-  virtual void draw();
+  virtual void update(float deltaTime, SharedManager);
+  virtual void draw(SharedManager);
 
   // Setters
   void setPosition(float x, float y);
@@ -39,6 +39,11 @@ public:
   bool isActive() const;
   const std::string &getName() const;
   std::weak_ptr<Node> getParent() const;
+
+  template <typename T> std::shared_ptr<T> parentAs() {
+    auto parent = getParent().lock();
+    return std::dynamic_pointer_cast<T>(parent);
+  }
 };
 
 } // namespace beam

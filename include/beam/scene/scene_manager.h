@@ -3,6 +3,7 @@
 // SceneManager.hpp
 #pragma once
 
+#include "beam/core/manager.h"
 #include "beam/scene/scene.h"
 #include <unordered_map>
 
@@ -24,10 +25,10 @@ public:
     return *this;
   }
 
-  void update(float deltaTime) override;
-  void draw() override;
+  void update(float deltaTime, SharedManager) override;
+  void draw(SharedManager) override;
 
-  void switchToScene(const std::string &name);
+  void switchToScene(const std::string &name, SharedManager);
   std::shared_ptr<Scene> getCurrentScene() const;
   std::shared_ptr<Scene> getScene(const std::string &name) const;
 };

@@ -1,6 +1,8 @@
 
 // App.cpp
 #include "beam/core/app.h"
+#include "beam/core/manager.h"
+#include <memory>
 
 namespace beam {
 
@@ -13,6 +15,7 @@ App::App(const std::string &windowTitle, int windowWidth, int windowHeight,
 
   rootEvent = std::make_shared<Event>("Root");
   sceneManager = std::make_shared<SceneManager>();
+  manager = std::make_shared<Manager>();
   *rootEvent << sceneManager;
 }
 
@@ -27,16 +30,18 @@ void App::run() {
     float deltaTime = GetFrameTime();
 
     // Update
-    rootEvent->update(deltaTime);
+    rootEvent->update(deltaTime, manager);
 
     // Draw
     BeginDrawing();
     ClearBackground(RAYWHITE);
 
-    rootEvent->draw();
+    rootEvent->draw(manager);
 
     EndDrawing();
   }
 }
+
+SharedManager App::getManager() const { return manager; }
 
 } // namespace beam

@@ -1,6 +1,7 @@
 // include/beam/core/Event.hpp
 #pragma once
 
+#include "beam/core/manager.h"
 #include "node.h"
 
 namespace beam {
@@ -32,8 +33,8 @@ public:
     return *this;
   }
 
-  void update(float deltaTime) override;
-  void draw() override;
+  void update(float deltaTime, SharedManager) override;
+  void draw(SharedManager) override;
 };
 
 } // namespace beam
