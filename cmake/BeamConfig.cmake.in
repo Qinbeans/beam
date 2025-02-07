@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(raylib 5.5 REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/BeamTargets.cmake")
+check_required_components(Beam)

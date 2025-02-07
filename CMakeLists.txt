@@ -1,64 +1,147 @@
 cmake_minimum_required(VERSION 3.15)
-project(GameProject)
+project(Beam VERSION 1.0.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+# Specify C++17 standard
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Set the build directories
-set(BUILD_DIR ${CMAKE_BINARY_DIR})
-set(OBJECTS_DIR ${BUILD_DIR}/objects)
-set(GAME_OBJECTS_DIR ${OBJECTS_DIR}/game_objects)
+# Generate compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Build type configuration
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build" FORCE)
+endif()
+
+set(RAYLIB_VERSION 5.5)
+find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
+if (NOT raylib_FOUND) # If there's none, fetch and build raylib
+  include(FetchContent)
+  FetchContent_Declare(
+    raylib
+    DOWNLOAD_EXTRACT_TIMESTAMP OFF
+    URL https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VERSION}.tar.gz
+  )
+  FetchContent_GetProperties(raylib)
+  if (NOT raylib_POPULATED) # Have we downloaded raylib yet?
+    set(FETCHCONTENT_QUIET NO)
+    FetchContent_MakeAvailable(raylib)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
+  endif()
+endif()
+
+# Source files
+set(BEAM_CORE_SOURCES
+    src/core/node.cpp
+    src/core/event.cpp
+    src/core/app.cpp
+)
+
+set(BEAM_SCENE_SOURCES
+    src/scene/scene.cpp
+    src/scene/scene_manager.cpp
+)
+
+set(BEAM_OBJECTS_SOURCES
+    src/objects/game_object.cpp
+    src/objects/text.cpp
+)
+
+# Create library
+add_library(beam
+    ${BEAM_CORE_SOURCES}
+    ${BEAM_SCENE_SOURCES}
+    ${BEAM_OBJECTS_SOURCES}
+)
 
 # Include directories
-include_directories(include)
+target_include_directories(beam
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_definitions(-DDEBUG)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_definitions(-DRELEASE)
-endif()
+# Link dependencies
+target_link_libraries(beam PUBLIC raylib)
 
 # Platform-specific settings
-if(WIN32)
-    set(TARGET main)
-    set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib/win)
-    set(LIBS ${LIB_DIR}/raylib.lib opengl32 gdi32 winmm shell32)
-    set(CMAKE_CXX_COMPILER cl)
-    file(COPY ${LIB_DIR}/raylib.dll DESTINATION ${BUILD_DIR})
-elseif(APPLE)
-    set(TARGET main)
-    set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib/mac)
-    set(LIBS ${LIB_DIR}/libraylib.a "-framework CoreVideo" "-framework IOKit" "-framework Cocoa" "-framework GLUT" "-framework OpenGL")
-    set(CMAKE_CXX_COMPILER clang++)
-elseif(UNIX)
-    set(TARGET main)
-    set(LIB_DIR ${CMAKE_SOURCE_DIR}/lib/linux)
-    set(LIBS ${LIB_DIR}/libraylib.a GL m pthread dl rt X11)
-    set(CMAKE_CXX_COMPILER g++)
-else()
-    message(FATAL_ERROR "Unsupported platform")
+if(APPLE)
+    target_link_libraries(beam PRIVATE 
+        "-framework IOKit"
+        "-framework Cocoa"
+        "-framework OpenGL"
+    )
 endif()
 
-file(COPY ${CMAKE_SOURCE_DIR}/assets DESTINATION ${BUILD_DIR})
+# Debug/Release configurations
+if(MSVC)
+    target_compile_options(beam PRIVATE 
+        $<$<CONFIG:Debug>:/W4 /WX>
+        $<$<CONFIG:Release>:/O2 /W4 /WX>
+    )
+else()
+    target_compile_options(beam PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Werror
+        $<$<CONFIG:Debug>:-O0 -g>
+        $<$<CONFIG:Release>:-O3>
+    )
+endif()
 
-# Link directories
-link_directories(${LIB_DIR})
+# Examples
+option(BEAM_BUILD_EXAMPLES "Build Beam examples" ON)
+if(BEAM_BUILD_EXAMPLES)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
+        add_subdirectory(examples)
+    endif()
+endif()
 
-# Add subdirectories
-add_subdirectory(event)
-add_subdirectory(game_objects)
+# Installation configuration
+include(GNUInstallDirs)
 
-# Collect all object files from the subdirectories
-set(OBJECT_FILES $<TARGET_OBJECTS:event> $<TARGET_OBJECTS:game_objects>)
+# Install the library and its dependencies
+install(TARGETS beam raylib glfw
+    EXPORT beam-targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_BINARY_DIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
 
-# Main executable
-add_executable(${TARGET} main.cpp ${OBJECT_FILES})
+# Install headers
+install(DIRECTORY include/beam
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*.h"
+)
 
-# Link libraries
-target_link_libraries(${TARGET} ${LIBS})
+# Export targets
+install(EXPORT beam-targets
+    FILE BeamTargets.cmake
+    NAMESPACE Beam::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Beam
+)
 
-# Output directories
-set_target_properties(${TARGET} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIR}
-    OUTPUT_NAME ${TARGET}
+# Generate package configuration
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/BeamConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/BeamConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/BeamConfig.cmake"
+    @ONLY
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/BeamConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/BeamConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/Beam
 )
