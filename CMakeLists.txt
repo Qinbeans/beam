@@ -47,6 +47,8 @@ set(BEAM_OBJECTS_SOURCES
     src/objects/game_object.cpp
     src/objects/text.cpp
     src/objects/button.cpp
+    src/objects/sprite.cpp
+    src/objects/input.cpp
 )
 
 # Create library

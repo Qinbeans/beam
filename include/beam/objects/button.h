@@ -7,7 +7,7 @@
 
 namespace beam {
 class Button : public GameObject {
-private:
+protected:
   std::string text;
   float fontSize;
   Vector2 position;
@@ -24,15 +24,6 @@ private:
 public:
   /**
    * @brief Construct a new Button object
-   * @param text The text to display on the button
-   * @param fontSize The font size of the text
-   * @param position The position of the button
-   * @param size The size of the button
-   * @param padding The padding of the button
-   * @param bg The background color of the button
-   * @param fg The foreground color of the button
-   * @param bgHover The background color of the button when hovered
-   * @param fgHover The foreground color of the button when hovered
    */
   Button(const std::string &text, float fontSize, Vector2 position,
          Vector2 size, Padding padding, Color bg, Color fg, Color bgHover,

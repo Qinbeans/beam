@@ -19,7 +19,7 @@ std::shared_ptr<Scene> createGameScene(SharedManager manager) {
 }
 
 int main() {
-  App app("Game Engine Demo", 800, 600, 60);
+  App app("Game Engine Demo", 800, 600, 60, true);
 
   auto manager = app.getManager();
 

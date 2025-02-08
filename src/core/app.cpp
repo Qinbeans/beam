@@ -8,11 +8,15 @@
 namespace beam {
 
 App::App(const std::string &windowTitle, int windowWidth, int windowHeight,
-         int fps)
+         int fps, bool fullscreen)
     : title(windowTitle), width(windowWidth), height(windowHeight),
       targetFPS(fps) {
   InitWindow(width, height, title.c_str());
   SetTargetFPS(targetFPS);
+
+  if (fullscreen) {
+    ToggleFullscreen();
+  }
 
   SetExitKey(KEY_NULL);
 

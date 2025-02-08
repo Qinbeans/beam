@@ -20,7 +20,7 @@ private:
 
 public:
   App(const std::string &windowTitle, int windowWidth, int windowHeight,
-      int fps);
+      int fps, bool fullscreen = false);
   ~App();
 
   Event &getEvent();
