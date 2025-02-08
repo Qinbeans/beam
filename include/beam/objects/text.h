@@ -1,5 +1,3 @@
-
-
 // Text.hpp
 #pragma once
 

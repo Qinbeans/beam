@@ -37,7 +37,7 @@ void App::run() {
 
     // Draw
     BeginDrawing();
-    ClearBackground(RAYWHITE);
+    ClearBackground(manager->getBackgroundColor());
 
     rootEvent->draw(manager);
 

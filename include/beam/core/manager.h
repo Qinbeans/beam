@@ -16,12 +16,14 @@ class Manager {
 private:
   AssetManager assets;
   StateManager states;
+  Color bg;
   bool isclosed = false;
 
 public:
   Manager() {
     assets = AssetManager();
     states = StateManager();
+    bg = RAYWHITE;
     isclosed = false;
   };
 
@@ -51,6 +53,32 @@ public:
   void close() { isclosed = true; }
 
   bool closed() const { return isclosed; }
+
+  void setBackgroundColor(Color bg) { this->bg = bg; }
+
+  Color getBackgroundColor() const { return bg; }
+
+  int getKeyPressed() const { return GetKeyPressed(); }
+
+  int getMouseX() const { return GetMouseX(); }
+
+  int getMouseY() const { return GetMouseY(); }
+
+  bool isMouseButtonDown(int button) const { return IsMouseButtonDown(button); }
+
+  bool isMouseButtonPressed(int button) const {
+    return IsMouseButtonPressed(button);
+  }
+
+  bool isMouseButtonReleased(int button) const {
+    return IsMouseButtonReleased(button);
+  }
+
+  bool isKeyDown(int key) const { return IsKeyDown(key); }
+
+  bool isKeyPressed(int key) const { return IsKeyPressed(key); }
+
+  bool isKeyReleased(int key) const { return IsKeyReleased(key); }
 };
 } // namespace beam
 

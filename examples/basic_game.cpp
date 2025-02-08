@@ -3,59 +3,20 @@
 #include "beam/core/app.h"
 #include "beam/core/manager.h"
 #include "beam/objects/button.h"
-#include "beam/objects/text.h"
+#include "game_scene.h"
+#include "menu_scene.h"
 #include "raylib.h"
 #include <iostream>
 
 using namespace beam;
 
-class MenuScene : public Scene {
-public:
-  MenuScene(SharedManager manager) : Scene("menu") {
-    int exampleState = manager->getState<int>("example state");
-    manager->setState("example state", exampleState + 1);
-    auto text = std::make_shared<Text>("Menu Scene", 400, 300, 40);
-    auto stateText = std::make_shared<Text>(
-        "State: " + std::to_string(exampleState), 400, 350, 20);
-    *this << text << stateText;
-  }
+std::shared_ptr<Scene> createMenuScene(SharedManager manager) {
+  return std::make_shared<MenuScene>(manager);
+}
 
-  void update(float, SharedManager managers) override {
-    if (IsKeyPressed(KEY_ENTER)) {
-      auto manager = parentAs<SceneManager>();
-      manager->switchToScene("game", managers);
-      parent.reset();
-    }
-  }
-
-  void onEnter(SharedManager) override {
-    std::cout << "Entering Menu Scene" << std::endl;
-  }
-
-  void onExit(SharedManager) override {
-    std::cout << "Exiting Menu Scene" << std::endl;
-  }
-};
-
-class GameScene : public Scene {
-public:
-  GameScene(SharedManager manager) : Scene("game") {
-    int exampleState = manager->getState<int>("example state");
-    manager->setState("example state", exampleState + 1);
-    auto text = std::make_shared<Text>("Game Scene", 400, 300, 40);
-    auto stateText = std::make_shared<Text>(
-        "State: " + std::to_string(exampleState), 400, 350, 20);
-    *this << text << stateText;
-  }
-
-  void onEnter(SharedManager) override {
-    std::cout << "Entering Game Scene" << std::endl;
-  }
-
-  void onExit(SharedManager) override {
-    std::cout << "Exiting Game Scene" << std::endl;
-  }
-};
+std::shared_ptr<Scene> createGameScene(SharedManager manager) {
+  return std::make_shared<GameScene>(manager);
+}
 
 int main() {
   App app("Game Engine Demo", 800, 600, 60);
@@ -66,8 +27,7 @@ int main() {
 
   // Set up scenes
   auto &sceneManager = app.getSceneManager();
-  sceneManager << std::make_shared<MenuScene>(manager);
-  sceneManager << std::make_shared<GameScene>(manager);
+  sceneManager << createMenuScene(manager) << createGameScene(manager);
 
   // Switch to initial scene
   sceneManager.switchToScene("menu", manager);
