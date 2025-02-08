@@ -18,10 +18,22 @@ public:
   template <typename T> Scene &operator<<(std::shared_ptr<T> child) {
     static_assert(std::is_base_of<Node, T>::value,
                   "Child must be derived from Node");
-    buffer.push_back(child);
+    if (child) {
+      // We need to ensure that 'this' is already owned by a shared_ptr
+      try {
+        auto sharedThis = shared_from_this();
+        child->setParent(sharedThis); // Set weak_ptr to parent
+        buffer.push_back(child);
+      } catch (const std::bad_weak_ptr &) {
+        // If we get here, the Scene wasn't properly created with make_shared
+        throw std::runtime_error(
+            "Scene must be created with make_shared before adding children");
+      }
+    }
     return *this;
   }
 
+  void init(SharedManager) override;
   void update(float, SharedManager) override;
   void draw(SharedManager) override;
 

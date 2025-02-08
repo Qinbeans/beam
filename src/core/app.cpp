@@ -28,6 +28,8 @@ App::App(const std::string &windowTitle, int windowWidth, int windowHeight,
 
 App::~App() { CloseWindow(); }
 
+void App::init() { rootEvent->init(manager); }
+
 Event &App::getEvent() { return *rootEvent; }
 
 SceneManager &App::getSceneManager() { return *sceneManager; }

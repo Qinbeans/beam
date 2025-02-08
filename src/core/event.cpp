@@ -7,6 +7,12 @@ namespace beam {
 
 Event::Event(const std::string &name) : Node(name) {}
 
+void Event::init(SharedManager manager) {
+  for (const auto &child : buffer) {
+    child->init(manager);
+  }
+}
+
 void Event::update(float deltaTime, SharedManager manager) {
   for (const auto &child : buffer) {
     child->update(deltaTime, manager);

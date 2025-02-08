@@ -26,6 +26,7 @@ public:
   explicit Node(const std::string &nodeName = "Node");
   virtual ~Node() = default;
 
+  virtual void init(SharedManager) {}
   virtual void update(float deltaTime, SharedManager);
   virtual void draw(SharedManager);
 

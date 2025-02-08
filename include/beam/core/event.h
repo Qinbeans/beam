@@ -34,6 +34,7 @@ public:
     return *this;
   }
 
+  void init(SharedManager) override;
   void update(float deltaTime, SharedManager) override;
   void draw(SharedManager) override;
 };

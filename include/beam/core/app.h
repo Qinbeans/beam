@@ -25,6 +25,7 @@ public:
 
   Event &getEvent();
   SceneManager &getSceneManager();
+  void init();
   void run();
 
   // getters

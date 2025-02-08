@@ -30,6 +30,12 @@ std::shared_ptr<Scene> SceneManager::getScene(const std::string &name) const {
   return (it != scenes.end()) ? it->second : nullptr;
 }
 
+void SceneManager::init(SharedManager managers) {
+  for (const auto &child : scenes) {
+    child.second->init(managers);
+  }
+}
+
 void SceneManager::update(float deltaTime, SharedManager managers) {
   if (currentScene) {
     currentScene->update(deltaTime, managers);

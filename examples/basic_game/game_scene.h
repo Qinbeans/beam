@@ -8,16 +8,20 @@ using namespace beam;
 
 class GameScene : public Scene {
 public:
-  GameScene(SharedManager manager) : Scene("game") {
+  GameScene() : Scene("game") {}
+
+  void init(SharedManager manager) override {
     int exampleState = manager->getState<int>("example state");
-    manager->setState("example state", exampleState + 1);
     auto text = std::make_shared<Text>("Game Scene", 400, 300, 40);
     auto stateText = std::make_shared<Text>(
         "State: " + std::to_string(exampleState), 400, 350, 20);
     *this << text << stateText;
+    Scene::init(manager);
   }
 
   void onEnter(SharedManager manager) override {
+    int exampleState = manager->getState<int>("example state");
+    manager->setState("example state", exampleState + 1);
     manager->setBackgroundColor(BLUE);
     std::cout << "Entering Game Scene" << std::endl;
   }
