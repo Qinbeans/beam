@@ -33,6 +33,8 @@ public:
 
     *menuFrame << exitButton;
 
+    menuFrame->setActive(false);
+
     *this << menuFrame << text << stateText;
     Scene::init(manager);
   }
@@ -42,6 +44,10 @@ public:
       auto scene_manager = parentAs<SceneManager>();
       scene_manager->switchToScene("game", manager);
       parent.reset();
+    }
+    if (manager->isKeyPressed(KEY_ESCAPE)) {
+      auto frame = getChildAs<Frame>(0);
+      frame->setActive(!frame->isActive());
     }
     Scene::update(dt, manager);
   }

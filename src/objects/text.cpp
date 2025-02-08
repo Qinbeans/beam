@@ -1,4 +1,5 @@
 #include "beam/objects/text.h"
+#include "beam/objects/game_object.h"
 
 namespace beam {
 
@@ -12,7 +13,7 @@ void Text::draw(SharedManager managers) {
     DrawText(content.c_str(), static_cast<int>(position.x),
              static_cast<int>(position.y), fontSize, color);
   }
-  Node::draw(managers);
+  GameObject::draw(managers);
 }
 
 void Text::setText(const std::string &text) { content = text; }

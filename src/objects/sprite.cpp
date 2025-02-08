@@ -1,5 +1,6 @@
 #include "beam/objects/sprite.h"
 #include "beam/core/manager.h"
+#include "beam/objects/game_object.h"
 #include "raylib.h"
 
 namespace beam {
@@ -18,12 +19,14 @@ Sprite::Sprite(SharedManager manager, const std::string &name, Vector2 position,
 }
 
 void Sprite::draw(SharedManager manager) {
+  GameObject::draw(manager);
   auto texture = manager->getAsset<Texture2D>(name + "Texture");
   DrawTextureEx(texture, position, rotation, scale, tint);
   drawCallback(manager);
 }
 
 void Sprite::update(float delta, SharedManager manager) {
+  GameObject::update(delta, manager);
   updateCallback(delta, manager);
 }
 

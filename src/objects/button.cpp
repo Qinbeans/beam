@@ -1,9 +1,14 @@
 #include "beam/objects/button.h"
 #include "beam/core/manager.h"
+#include "beam/objects/game_object.h"
 #include "raylib.h"
 
 namespace beam {
 void Button::draw(SharedManager manager) {
+  GameObject::draw(manager);
+  if (!active) {
+    return;
+  }
   Font font;
   if (manager->hasAsset("buttonFont")) {
     font = manager->getAsset<Font>("buttonFont");
@@ -50,7 +55,11 @@ void Button::onClick(std::function<void(Button *, SharedManager)> callback) {
   clickCallback = callback;
 }
 
-void Button::update(float, SharedManager manager) {
+void Button::update(float dt, SharedManager manager) {
+  GameObject::update(dt, manager);
+  if (!active) {
+    return;
+  }
   if (updateCallback) {
     updateCallback(this, manager);
   }

@@ -6,6 +6,10 @@ Frame::Frame(const std::string &name, Vector2 origin, Rectangle bound, Color bg)
     : GameObject(name), origin(origin), bound(bound), bg(bg), rotation(0) {}
 
 void Frame::draw(SharedManager managers) {
+  GameObject::draw(managers);
+  if (!active) {
+    return;
+  }
   DrawRectanglePro(bound, origin, rotation, bg);
   for (const auto &child : buffer) {
     child->draw(managers);
@@ -16,12 +20,17 @@ void Frame::draw(SharedManager managers) {
 }
 
 void Frame::init(SharedManager managers) {
+  GameObject::init(managers);
   for (const auto &child : buffer) {
     child->init(managers);
   }
 }
 
 void Frame::update(float delta, SharedManager managers) {
+  GameObject::update(delta, managers);
+  if (!active) {
+    return;
+  }
   for (const auto &child : buffer) {
     child->update(delta, managers);
   }

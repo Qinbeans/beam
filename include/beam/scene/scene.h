@@ -9,7 +9,7 @@
 namespace beam {
 
 class Scene : public Node {
-private:
+protected:
   std::vector<std::shared_ptr<Node>> buffer;
 
 public:
@@ -31,6 +31,10 @@ public:
       }
     }
     return *this;
+  }
+
+  template <typename T> T *getChildAs(int index) {
+    return dynamic_cast<T *>(buffer[index].get());
   }
 
   void init(SharedManager) override;

@@ -44,6 +44,9 @@ public:
   Rectangle getBound() const;
   Color getBackgroundColor() const;
   float getRotation() const;
+  template <typename T> T *getChildAs(int index) {
+    return dynamic_cast<T *>(buffer[index].get());
+  }
 
   void onUpdate(std::function<void(float, SharedManager)>);
   void onDraw(std::function<void(SharedManager)>);

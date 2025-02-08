@@ -31,18 +31,21 @@ std::shared_ptr<Scene> SceneManager::getScene(const std::string &name) const {
 }
 
 void SceneManager::init(SharedManager managers) {
+  Node::init(managers);
   for (const auto &child : scenes) {
     child.second->init(managers);
   }
 }
 
 void SceneManager::update(float deltaTime, SharedManager managers) {
+  Node::update(deltaTime, managers);
   if (currentScene) {
     currentScene->update(deltaTime, managers);
   }
 }
 
 void SceneManager::draw(SharedManager managers) {
+  Node::draw(managers);
   if (currentScene) {
     currentScene->draw(managers);
   }
