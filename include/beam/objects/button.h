@@ -17,8 +17,6 @@ private:
   Color fg;
   Color bgHover;
   Color fgHover;
-  bool hovered;
-  bool clicked;
   std::function<void(Button *, SharedManager)> updateCallback;
   std::function<void(Button *, SharedManager)> hoverCallback;
   std::function<void(Button *, SharedManager)> clickCallback;
@@ -41,8 +39,8 @@ public:
          Color fgHover)
       : text(text), fontSize(fontSize), position(position), size(size),
         padding(padding), bg(bg), fg(fg), bgHover(bgHover), fgHover(fgHover),
-        hovered(false), clicked(false), updateCallback(nullptr),
-        hoverCallback(nullptr), clickCallback(nullptr) {}
+        updateCallback(nullptr), hoverCallback(nullptr),
+        clickCallback(nullptr) {}
 
   void draw(SharedManager) override;
   void update(float, SharedManager) override;

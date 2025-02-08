@@ -15,7 +15,7 @@ void Button::draw(SharedManager manager) {
   const Vector2 text_position = {this->position.x + padding.left,
                                  this->position.y + padding.top};
 
-  if (hovered) {
+  if (isHovered()) {
     DrawRectangle(position.x, position.y, width, height, bgHover);
     DrawText(text.c_str(), text_position.x, text_position.y, fontSize, fgHover);
   } else {
