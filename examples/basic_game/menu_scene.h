@@ -36,6 +36,7 @@ public:
     menuFrame->setActive(false);
 
     *this << menuFrame << text << stateText;
+    manager->setState("example state", exampleState + 1);
     Scene::init(manager);
   }
 
@@ -52,9 +53,7 @@ public:
     Scene::update(dt, manager);
   }
 
-  void onEnter(SharedManager manager) override {
-    int exampleState = manager->getState<int>("example state");
-    manager->setState("example state", exampleState + 1);
+  void onEnter(SharedManager) override {
     std::cout << "Entering Menu Scene" << std::endl;
   }
 

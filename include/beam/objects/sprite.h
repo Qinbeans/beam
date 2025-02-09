@@ -16,8 +16,8 @@ private:
   float rotation;
   float scale;
 
-  std::function<void(float, SharedManager)> updateCallback;
-  std::function<void(SharedManager)> drawCallback;
+  std::function<void(float, Sprite *, SharedManager)> updateCallback;
+  std::function<void(Sprite *, SharedManager)> drawCallback;
 
 public:
   Sprite(SharedManager manager, const std::string &name, Vector2 position,
@@ -42,7 +42,7 @@ public:
   float getRotation() const;
   float getScale() const;
 
-  void onUpdate(std::function<void(float, SharedManager)>);
-  void onDraw(std::function<void(SharedManager)>);
+  void onUpdate(std::function<void(float, Sprite *, SharedManager)>);
+  void onDraw(std::function<void(Sprite *, SharedManager)>);
 };
 } // namespace beam

@@ -22,12 +22,12 @@ void Sprite::draw(SharedManager manager) {
   GameObject::draw(manager);
   auto texture = manager->getAsset<Texture2D>(name + "Texture");
   DrawTextureEx(texture, position, rotation, scale, tint);
-  drawCallback(manager);
+  drawCallback(this, manager);
 }
 
 void Sprite::update(float delta, SharedManager manager) {
   GameObject::update(delta, manager);
-  updateCallback(delta, manager);
+  updateCallback(delta, this, manager);
 }
 
 void Sprite::setPosition(Vector2 position) { this->position = position; }
@@ -54,11 +54,12 @@ float Sprite::getRotation() const { return rotation; }
 
 float Sprite::getScale() const { return scale; }
 
-void Sprite::onUpdate(std::function<void(float, SharedManager)> callback) {
+void Sprite::onUpdate(
+    std::function<void(float, Sprite *, SharedManager)> callback) {
   updateCallback = callback;
 }
 
-void Sprite::onDraw(std::function<void(SharedManager)> callback) {
+void Sprite::onDraw(std::function<void(Sprite *, SharedManager)> callback) {
   drawCallback = callback;
 }
 } // namespace beam

@@ -17,8 +17,8 @@ private:
   bool focused;
   float cursorBlinkTime;
 
-  std::function<void(SharedManager)> focusCallback;
-  std::function<void(SharedManager)> blurCallback;
+  std::function<void(Input *, SharedManager)> focusCallback;
+  std::function<void(Input *, SharedManager)> blurCallback;
 
 public:
   /**
@@ -40,7 +40,7 @@ public:
   const std::string &getContent() const;
   bool isFocused() const;
 
-  void onFocus(std::function<void(SharedManager)>);
-  void onBlur(std::function<void(SharedManager)>);
+  void onFocus(std::function<void(Input *, SharedManager)>);
+  void onBlur(std::function<void(Input *, SharedManager)>);
 };
 } // namespace beam

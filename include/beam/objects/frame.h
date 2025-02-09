@@ -16,8 +16,8 @@ private:
 
   std::vector<std::shared_ptr<GameObject>> buffer;
 
-  std::function<void(float, SharedManager)> updateCallback;
-  std::function<void(SharedManager)> drawCallback;
+  std::function<void(float, Frame *, SharedManager)> updateCallback;
+  std::function<void(Frame *, SharedManager)> drawCallback;
 
 public:
   Frame(const std::string &name, Vector2 origin, Rectangle bound,
@@ -48,7 +48,7 @@ public:
     return dynamic_cast<T *>(buffer[index].get());
   }
 
-  void onUpdate(std::function<void(float, SharedManager)>);
-  void onDraw(std::function<void(SharedManager)>);
+  void onUpdate(std::function<void(float, Frame *, SharedManager)>);
+  void onDraw(std::function<void(Frame *, SharedManager)>);
 };
 } // namespace beam

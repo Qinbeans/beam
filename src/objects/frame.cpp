@@ -15,7 +15,7 @@ void Frame::draw(SharedManager managers) {
     child->draw(managers);
   }
   if (drawCallback) {
-    drawCallback(managers);
+    drawCallback(this, managers);
   }
 }
 
@@ -28,14 +28,11 @@ void Frame::init(SharedManager managers) {
 
 void Frame::update(float delta, SharedManager managers) {
   GameObject::update(delta, managers);
-  if (!active) {
-    return;
-  }
   for (const auto &child : buffer) {
     child->update(delta, managers);
   }
   if (updateCallback) {
-    updateCallback(delta, managers);
+    updateCallback(delta, this, managers);
   }
 }
 
@@ -55,11 +52,12 @@ Color Frame::getBackgroundColor() const { return bg; }
 
 float Frame::getRotation() const { return rotation; }
 
-void Frame::onUpdate(std::function<void(float, SharedManager)> callback) {
+void Frame::onUpdate(
+    std::function<void(float, Frame *, SharedManager)> callback) {
   updateCallback = callback;
 }
 
-void Frame::onDraw(std::function<void(SharedManager)> callback) {
+void Frame::onDraw(std::function<void(Frame *, SharedManager)> callback) {
   drawCallback = callback;
 }
 } // namespace beam

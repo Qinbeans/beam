@@ -43,7 +43,8 @@ bool Button::isClicked() const {
   return isHovered() && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
 }
 
-void Button::onUpdate(std::function<void(Button *, SharedManager)> callback) {
+void Button::onUpdate(
+    std::function<void(float, Button *, SharedManager)> callback) {
   updateCallback = callback;
 }
 
@@ -61,7 +62,7 @@ void Button::update(float dt, SharedManager manager) {
     return;
   }
   if (updateCallback) {
-    updateCallback(this, manager);
+    updateCallback(dt, this, manager);
   }
 
   if (isHovered()) {

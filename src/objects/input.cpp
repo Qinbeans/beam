@@ -39,7 +39,7 @@ void Input::update(float dt, SharedManager manager) {
       !focused) {
     focused = true;
     if (focusCallback) {
-      focusCallback(manager);
+      focusCallback(this, manager);
     }
   }
 
@@ -47,7 +47,7 @@ void Input::update(float dt, SharedManager manager) {
       focused) {
     focused = false;
     if (blurCallback) {
-      blurCallback(manager);
+      blurCallback(this, manager);
     }
   }
 }
@@ -60,11 +60,11 @@ const std::string &Input::getContent() const { return content; }
 
 bool Input::isFocused() const { return focused; }
 
-void Input::onFocus(std::function<void(SharedManager)> callback) {
+void Input::onFocus(std::function<void(Input *, SharedManager)> callback) {
   focusCallback = callback;
 }
 
-void Input::onBlur(std::function<void(SharedManager)> callback) {
+void Input::onBlur(std::function<void(Input *, SharedManager)> callback) {
   blurCallback = callback;
 }
 

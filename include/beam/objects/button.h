@@ -17,7 +17,7 @@ protected:
   Color fg;
   Color bgHover;
   Color fgHover;
-  std::function<void(Button *, SharedManager)> updateCallback;
+  std::function<void(float, Button *, SharedManager)> updateCallback;
   std::function<void(Button *, SharedManager)> hoverCallback;
   std::function<void(Button *, SharedManager)> clickCallback;
 
@@ -51,7 +51,7 @@ public:
   bool isHovered() const;
   bool isClicked() const;
 
-  void onUpdate(std::function<void(Button *, SharedManager)> callback);
+  void onUpdate(std::function<void(float, Button *, SharedManager)> callback);
   void onHover(std::function<void(Button *, SharedManager)> callback);
   void onClick(std::function<void(Button *, SharedManager)> callback);
 };
