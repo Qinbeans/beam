@@ -83,8 +83,8 @@ endif()
 # Debug/Release configurations
 if(MSVC)
     target_compile_options(beam PRIVATE 
-        $<$<CONFIG:Debug>:/W4 /WX>
-        $<$<CONFIG:Release>:/O2 /W4 /WX>
+        $<$<CONFIG:Debug>:/W4>
+        $<$<CONFIG:Release>:/O2 /W4>
     )
 else()
     target_compile_options(beam PRIVATE
