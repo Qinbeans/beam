@@ -1,7 +1,9 @@
 build
+build-nmake
 .vscode
 game2.tar.gz
 .cache
 .venv
 debug.log
 .DS_Store
+compile_commands.json

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 project(Beam VERSION 1.0.0 LANGUAGES CXX)
 
-# Specify C++17 standard
-set(CMAKE_CXX_STANDARD 17)
+# Specify C++20 standard
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -31,11 +31,33 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
   endif()
 endif()
 
+# Add websocketpp library
+include(FetchContent)
+
+# Add standalone ASIO first use C++20
+FetchContent_Declare(
+  asio
+  GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+  GIT_TAG        asio-1-28-0
+  CMAKE_ARGS    -DCMAKE_CXX_STANDARD=20
+)
+FetchContent_MakeAvailable(asio)
+
+FetchContent_Declare(
+  websocketpp
+  GIT_REPOSITORY https://github.com/zaphoyd/websocketpp.git
+  GIT_TAG        0.8.2 # Using a stable release version
+  CMAKE_ARGS    -DCMAKE_CXX_STANDARD=20
+)
+FetchContent_MakeAvailable(websocketpp)
+
 # Source files
 set(BEAM_CORE_SOURCES
     src/core/node.cpp
     src/core/event.cpp
     src/core/app.cpp
+    src/core/logger.cpp
+    src/core/websocket_client.cpp
 )
 
 set(BEAM_SCENE_SOURCES
@@ -59,11 +81,21 @@ add_library(beam
     ${BEAM_OBJECTS_SOURCES}
 )
 
+# Set C++ standard for beam library
+set_target_properties(beam PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
+
 # Include directories
 target_include_directories(beam
-    PUBLIC 
+    PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>
+        $<BUILD_INTERFACE:${websocketpp_SOURCE_DIR}>
+        $<INSTALL_INTERFACE:websocketpp>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -71,18 +103,30 @@ target_include_directories(beam
 # Link dependencies
 target_link_libraries(beam PUBLIC raylib)
 
-# Platform-specific settings
+# Add preprocessor definitions for websocketpp
+target_compile_definitions(beam PRIVATE ASIO_STANDALONE _WEBSOCKETPP_CPP11_STRICT_)
+
+# Platform-specific settings for websocketpp
+if(WIN32)
+    target_link_libraries(beam PRIVATE ws2_32 wsock32)
+endif()
+
 if(APPLE)
-    target_link_libraries(beam PRIVATE 
+    target_link_libraries(beam PRIVATE
         "-framework IOKit"
         "-framework Cocoa"
         "-framework OpenGL"
     )
 endif()
 
+if(UNIX AND NOT APPLE)
+    find_package(Threads REQUIRED)
+    target_link_libraries(beam PRIVATE Threads::Threads)
+endif()
+
 # Debug/Release configurations
 if(MSVC)
-    target_compile_options(beam PRIVATE 
+    target_compile_options(beam PRIVATE
         $<$<CONFIG:Debug>:/W4>
         $<$<CONFIG:Release>:/O2 /W4>
     )

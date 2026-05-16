@@ -22,7 +22,7 @@ foreach(example_dir ${EXAMPLE_DIRS_FILTERED})
     # If we found a main source file, set up the example
     if(MAIN_SOURCE)
         # Find all additional source files in the example directory
-        file(GLOB_RECURSE ADDITIONAL_SOURCES 
+        file(GLOB_RECURSE ADDITIONAL_SOURCES
             "${CMAKE_CURRENT_SOURCE_DIR}/${example_dir}/*.cpp"
             "${CMAKE_CURRENT_SOURCE_DIR}/${example_dir}/*.h"
         )
@@ -31,6 +31,13 @@ foreach(example_dir ${EXAMPLE_DIRS_FILTERED})
 
         # Create the executable
         add_executable(${example_dir} ${MAIN_SOURCE} ${ADDITIONAL_SOURCES})
+
+        # Set C++ standard
+        set_target_properties(${example_dir} PROPERTIES
+            CXX_STANDARD 20
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS OFF
+        )
 
         # Link with beam library
         target_link_libraries(${example_dir} PRIVATE beam)
@@ -48,7 +55,7 @@ foreach(example_dir ${EXAMPLE_DIRS_FILTERED})
 
         # Platform-specific settings
         if(APPLE)
-            target_link_libraries(${example_dir} PRIVATE 
+            target_link_libraries(${example_dir} PRIVATE
                 "-framework IOKit"
                 "-framework Cocoa"
                 "-framework OpenGL"
@@ -57,7 +64,7 @@ foreach(example_dir ${EXAMPLE_DIRS_FILTERED})
 
         # Add debug/release configurations
         if(MSVC)
-            target_compile_options(${example_dir} PRIVATE 
+            target_compile_options(${example_dir} PRIVATE
                 $<$<CONFIG:Debug>:/W4>
                 $<$<CONFIG:Release>:/O2 /W4>
             )
@@ -86,6 +93,6 @@ endforeach()
 
 # Copy global resources if they exist
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/resources")
-    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources" 
+    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/resources"
          DESTINATION "${CMAKE_BINARY_DIR}/examples")
 endif()
