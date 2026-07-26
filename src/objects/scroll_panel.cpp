@@ -34,7 +34,15 @@ void ScrollPanel::draw(SharedManager manager) {
   BeginScissorMode((int)view.x, (int)view.y, (int)view.width,
                     (int)view.height);
   rlPushMatrix();
-  rlTranslatef(position.x - scroll.x, position.y - scroll.y, 0);
+  // GuiScrollPanel hands back a scroll offset that is already signed for
+  // addition - it sits at +BORDER_WIDTH when scrolled to the top and grows
+  // negative as the content scrolls down - so children offset by it directly,
+  // matching raygui's own idiom of drawing content at
+  // (bounds.x + scroll.x, bounds.y + scroll.y). Subtracting it instead
+  // inverted both axes, sliding content down (and off the view) when scrolling
+  // down. This is only observable once the content is larger than the panel,
+  // since raygui pins the offset to zero while neither scrollbar is needed.
+  rlTranslatef(position.x + scroll.x, position.y + scroll.y, 0);
   for (const auto &child : buffer) {
     child->draw(manager);
   }
