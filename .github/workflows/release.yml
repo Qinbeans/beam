@@ -13,6 +13,15 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  # Manual retry path: rebuild and (re)publish an already-tagged version
+  # without going through another version-bump PR. Useful when the tag job
+  # already ran and pushed the tag, but build-linux/publish failed for a
+  # reason unrelated to the version itself (e.g. a missing CI dependency).
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Existing tag to rebuild, e.g. 1.0.1 (no leading v)"
+        required: true
 
 permissions:
   contents: write
@@ -20,8 +29,9 @@ permissions:
 jobs:
   tag:
     if: >
-      github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.head.ref, 'release/v')
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       startsWith(github.event.pull_request.head.ref, 'release/v'))
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -31,13 +41,18 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Extract version from branch name
+      - name: Determine version
         id: version
         run: |
-          REF="${{ github.event.pull_request.head.ref }}"
-          echo "version=${REF#release/v}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            REF="${{ github.event.pull_request.head.ref }}"
+            echo "version=${REF#release/v}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Tag release commit
+        if: github.event_name != 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -52,12 +67,13 @@ jobs:
         with:
           ref: v${{ needs.tag.outputs.version }}
 
-      - name: Install X11 + Wayland development packages
+      - name: Install X11 + Wayland + OpenGL development packages
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
-            libwayland-dev libxkbcommon-dev wayland-protocols pkg-config
+            libwayland-dev libxkbcommon-dev wayland-protocols pkg-config \
+            libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
