@@ -148,6 +148,7 @@ NB_MODULE(_beam, m) {
       .def("set_background_color", &Manager::setBackgroundColor, nb::arg("color"))
       .def("get_background_color", &Manager::getBackgroundColor)
       .def("get_key_pressed", &Manager::getKeyPressed)
+      .def("get_char_pressed", &Manager::getCharPressed)
       .def("get_mouse_x", &Manager::getMouseX)
       .def("get_mouse_y", &Manager::getMouseY)
       .def("is_mouse_button_down", &Manager::isMouseButtonDown, nb::arg("button"))

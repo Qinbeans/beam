@@ -97,6 +97,7 @@ public:
 
   // Input handling methods
   int getKeyPressed() const { return GetKeyPressed(); }
+  char getCharPressed() const { return GetCharPressed(); }
   int getMouseX() const { return GetMouseX(); }
   int getMouseY() const { return GetMouseY(); }
 

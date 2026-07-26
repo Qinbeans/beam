@@ -32,6 +32,8 @@ class CounterScene(beam.Scene):
         """Advance the frame counter and close after MAX_FRAMES or ESC."""
         self.frames += 1
         self.label.set_text(f"frame {self.frames}")
+        ch = manager.get_char_pressed()  # Clear the char buffer so ESC doesn't get stuck in it.
+        print(f"char pressed: {ch}")
         # Close after a short while so the demo exits on its own.
         if self.frames >= MAX_FRAMES or manager.is_key_pressed(ESC_KEY):
             manager.close()
