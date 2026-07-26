@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Beam VERSION 1.1.3 LANGUAGES CXX)
+project(Beam VERSION 1.1.4 LANGUAGES CXX)
 
 # Nothing in src/, include/beam/, or python/src/bindings.cpp needs a C++20
 # language feature, so stay on C++17 project-wide. In particular: under strict
