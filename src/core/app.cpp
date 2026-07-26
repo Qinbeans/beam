@@ -8,10 +8,12 @@
 namespace beam {
 
 App::App(const std::string &windowTitle, int windowWidth, int windowHeight,
-         int fps, bool fullscreen)
+         int fps, bool fullscreen, bool resizable)
     : title(windowTitle), width(windowWidth), height(windowHeight),
       targetFPS(fps) {
-  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  if (resizable) {
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+  }
   InitWindow(width, height, title.c_str());
   SetTargetFPS(targetFPS);
 
