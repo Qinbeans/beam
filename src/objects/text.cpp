@@ -30,8 +30,19 @@ void Text::draw(SharedManager manager) {
     GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(color));
     GuiSetStyle(LABEL, TEXT_ALIGNMENT, TEXT_ALIGN_LEFT);
 
+    // GuiLabel does not lay the string out in the rectangle it is handed: it
+    // first insets it by the control's border width and text padding. Sizing
+    // the rectangle to exactly the measured text therefore leaves the string
+    // wider than the space it is given, and raygui responds by replacing the
+    // tail of every line with an ellipsis. Grow the rectangle by that same
+    // inset - and shift its origin back by it - so the text is laid out at the
+    // full width it measured, starting exactly at this object's position.
+    const float inset = static_cast<float>(GuiGetStyle(LABEL, BORDER_WIDTH) +
+                                           GuiGetStyle(LABEL, TEXT_PADDING));
     const int width = GuiGetTextWidth(content.c_str());
-    GuiLabel({position.x, position.y, static_cast<float>(width), fontSize}, content.c_str());
+    GuiLabel({position.x - inset, position.y - inset,
+              static_cast<float>(width) + 2.0f * inset, fontSize + 2.0f * inset},
+             content.c_str());
 
     GuiSetFont(prevFont);
     GuiSetStyle(DEFAULT, TEXT_SIZE, prevTextSize);
