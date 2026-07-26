@@ -34,9 +34,17 @@ void MessageBox::draw(SharedManager manager) {
   // the window's own close button, i + 1 for buttons[i]. Its return value
   // (RESULT_PRESSED) tells us whether that happened this frame at all, so we
   // don't need to track edge-detection state ourselves.
+  int prevBaseNormal = GuiGetStyle(STATUSBAR, BASE_COLOR_NORMAL);
+  int prevTextNormal = GuiGetStyle(STATUSBAR, TEXT_COLOR_NORMAL);
+  GuiSetStyle(STATUSBAR, BASE_COLOR_NORMAL, ColorToInt(bg));
+  GuiSetStyle(STATUSBAR, TEXT_COLOR_NORMAL, ColorToInt(fg));
+
   int btnActive = -1;
   int result = GuiMessageBox(getBounds(), title.c_str(), message.c_str(),
                               joined.c_str(), &btnActive);
+
+  GuiSetStyle(STATUSBAR, BASE_COLOR_NORMAL, prevBaseNormal);
+  GuiSetStyle(STATUSBAR, TEXT_COLOR_NORMAL, prevTextNormal);
 
   // Only a press on one of `buttons` (btnActive >= 1) maps to a valid index
   // into the buttons list; the window's close button (btnActive == 0) has no
@@ -59,6 +67,10 @@ void MessageBox::setPosition(Vector2 position) { this->position = position; }
 
 void MessageBox::setSize(Vector2 size) { this->size = size; }
 
+void MessageBox::setBgColor(Color color) { bg = color; }
+
+void MessageBox::setFgColor(Color color) { fg = color; }
+
 const std::string &MessageBox::getTitle() const { return title; }
 
 const std::string &MessageBox::getMessage() const { return message; }
@@ -70,6 +82,10 @@ Vector2 MessageBox::getPosition() const { return position; }
 Vector2 MessageBox::getSize() const { return size; }
 
 int MessageBox::getLastButton() const { return lastButton; }
+
+Color MessageBox::getBgColor() const { return bg; }
+
+Color MessageBox::getFgColor() const { return fg; }
 
 void MessageBox::onButton(std::function<void(MessageBox *, SharedManager, int)> callback) {
   onButtonCallback = callback;

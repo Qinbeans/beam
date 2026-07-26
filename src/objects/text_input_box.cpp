@@ -45,10 +45,18 @@ void TextInputBox::draw(SharedManager manager) {
   // don't need to track edge-detection state ourselves. Text edit mode is
   // owned entirely by raygui's internal static state (see the class-level
   // warning), so we never pass/track an editMode flag of our own here.
+  int prevBaseNormal = GuiGetStyle(STATUSBAR, BASE_COLOR_NORMAL);
+  int prevTextNormal = GuiGetStyle(STATUSBAR, TEXT_COLOR_NORMAL);
+  GuiSetStyle(STATUSBAR, BASE_COLOR_NORMAL, ColorToInt(bg));
+  GuiSetStyle(STATUSBAR, TEXT_COLOR_NORMAL, ColorToInt(fg));
+
   int btnActive = -1;
   int result = GuiTextInputBox(getBounds(), title.c_str(), message.c_str(),
                                 buffer, sizeof(buffer), joined.c_str(),
                                 &btnActive, &secretView);
+
+  GuiSetStyle(STATUSBAR, BASE_COLOR_NORMAL, prevBaseNormal);
+  GuiSetStyle(STATUSBAR, TEXT_COLOR_NORMAL, prevTextNormal);
 
   content = buffer;
 
@@ -77,6 +85,10 @@ void TextInputBox::setPosition(Vector2 position) { this->position = position; }
 
 void TextInputBox::setSize(Vector2 size) { this->size = size; }
 
+void TextInputBox::setBgColor(Color color) { bg = color; }
+
+void TextInputBox::setFgColor(Color color) { fg = color; }
+
 const std::string &TextInputBox::getTitle() const { return title; }
 
 const std::string &TextInputBox::getMessage() const { return message; }
@@ -92,6 +104,10 @@ Vector2 TextInputBox::getPosition() const { return position; }
 Vector2 TextInputBox::getSize() const { return size; }
 
 int TextInputBox::getLastButton() const { return lastButton; }
+
+Color TextInputBox::getBgColor() const { return bg; }
+
+Color TextInputBox::getFgColor() const { return fg; }
 
 void TextInputBox::onButton(std::function<void(TextInputBox *, SharedManager, int)> callback) {
   onButtonCallback = callback;

@@ -16,14 +16,21 @@ protected:
   int hscroll;
   int activeIndex;
   int focusIndex;
+  Color bg;
+  Color fg;
+  Color bgActive;
+  Color fgActive;
 
   std::function<void(TabBar *, SharedManager)> changeCallback;
 
 public:
   TabBar(const std::vector<std::string> &items, Vector2 position,
-         Vector2 size, int active = 0)
+         Vector2 size, int active = 0, Color bg = LIGHTGRAY,
+         Color fg = DARKGRAY, Color bgActive = DARKGRAY,
+         Color fgActive = WHITE)
       : items(items), position(position), size(size), hscroll(0),
-        activeIndex(active), focusIndex(-1) {}
+        activeIndex(active), focusIndex(-1), bg(bg), fg(fg),
+        bgActive(bgActive), fgActive(fgActive) {}
 
   void draw(SharedManager) override;
 
@@ -32,6 +39,10 @@ public:
   void setSize(Vector2 size);
   void setHscroll(int hscroll);
   void setActive(int active);
+  void setBgColor(Color color);
+  void setFgColor(Color color);
+  void setBgActiveColor(Color color);
+  void setFgActiveColor(Color color);
 
   const std::vector<std::string> &getItems() const;
   Vector2 getPosition() const;
@@ -39,6 +50,10 @@ public:
   int getHscroll() const;
   int getActive() const;
   int getFocusIndex() const;
+  Color getBgColor() const;
+  Color getFgColor() const;
+  Color getBgActiveColor() const;
+  Color getFgActiveColor() const;
 
   const Rectangle getBounds() const;
 

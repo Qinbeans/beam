@@ -948,8 +948,10 @@ NB_MODULE(_beam, m) {
       .def("on_change", &ValueBoxFloat::onChange, nb::arg("callback"));
 
   nb::class_<WindowBox, GameObject>(m, "WindowBox")
-      .def(nb::init<const std::string &, Vector2, Vector2>(), nb::arg("title"),
-           nb::arg("position"), nb::arg("size"))
+      .def(nb::init<const std::string &, Vector2, Vector2, Color, Color>(),
+           nb::arg("title"), nb::arg("position"), nb::arg("size"),
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255})
       .def(
           "add",
           [](std::shared_ptr<WindowBox> self, std::shared_ptr<GameObject> child) {
@@ -967,15 +969,21 @@ NB_MODULE(_beam, m) {
       .def("set_title", &WindowBox::setTitle, nb::arg("title"))
       .def("set_position", &WindowBox::setPosition, nb::arg("position"))
       .def("set_size", &WindowBox::setSize, nb::arg("size"))
+      .def("set_bg_color", &WindowBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &WindowBox::setFgColor, nb::arg("color"))
       .def("get_title", &WindowBox::getTitle)
       .def("get_position", &WindowBox::getPosition)
       .def("get_size", &WindowBox::getSize)
+      .def("get_bg_color", &WindowBox::getBgColor)
+      .def("get_fg_color", &WindowBox::getFgColor)
       .def("get_bounds", &WindowBox::getBounds)
       .def("on_close", &WindowBox::onClose, nb::arg("callback"));
 
   nb::class_<ScrollPanel, GameObject>(m, "ScrollPanel")
-      .def(nb::init<Vector2, Vector2, Rectangle>(), nb::arg("position"),
-           nb::arg("size"), nb::arg("content"))
+      .def(nb::init<Vector2, Vector2, Rectangle, Color, Color>(),
+           nb::arg("position"), nb::arg("size"), nb::arg("content"),
+           nb::arg("bg") = Color{245, 245, 245, 255},
+           nb::arg("fg") = Color{131, 131, 131, 255})
       .def(
           "add",
           [](std::shared_ptr<ScrollPanel> self, std::shared_ptr<GameObject> child) {
@@ -994,11 +1002,15 @@ NB_MODULE(_beam, m) {
       .def("set_size", &ScrollPanel::setSize, nb::arg("size"))
       .def("set_content", &ScrollPanel::setContent, nb::arg("content"))
       .def("set_scroll", &ScrollPanel::setScroll, nb::arg("scroll"))
+      .def("set_bg_color", &ScrollPanel::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ScrollPanel::setFgColor, nb::arg("color"))
       .def("get_position", &ScrollPanel::getPosition)
       .def("get_size", &ScrollPanel::getSize)
       .def("get_content", &ScrollPanel::getContent)
       .def("get_scroll", &ScrollPanel::getScroll)
       .def("get_view", &ScrollPanel::getView)
+      .def("get_bg_color", &ScrollPanel::getBgColor)
+      .def("get_fg_color", &ScrollPanel::getFgColor)
       .def("get_bounds", &ScrollPanel::getBounds);
 
   nb::class_<ListView, GameObject>(m, "ListView")
@@ -1026,47 +1038,69 @@ NB_MODULE(_beam, m) {
       .def("on_change", &ListView::onChange, nb::arg("callback"));
 
   nb::class_<TabBar, GameObject>(m, "TabBar")
-      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int>(),
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int,
+                     Color, Color, Color, Color>(),
            nb::arg("items"), nb::arg("position"), nb::arg("size"),
-           nb::arg("active") = 0)
+           nb::arg("active") = 0, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255},
+           nb::arg("bg_active") = Color{80, 80, 80, 255},
+           nb::arg("fg_active") = Color{255, 255, 255, 255})
       .def("set_items", &TabBar::setItems, nb::arg("items"))
       .def("set_position", &TabBar::setPosition, nb::arg("position"))
       .def("set_size", &TabBar::setSize, nb::arg("size"))
       .def("set_hscroll", &TabBar::setHscroll, nb::arg("hscroll"))
       .def("set_active", &TabBar::setActive, nb::arg("active"))
+      .def("set_bg_color", &TabBar::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &TabBar::setFgColor, nb::arg("color"))
+      .def("set_bg_active_color", &TabBar::setBgActiveColor, nb::arg("color"))
+      .def("set_fg_active_color", &TabBar::setFgActiveColor, nb::arg("color"))
       .def("get_items", &TabBar::getItems)
       .def("get_position", &TabBar::getPosition)
       .def("get_size", &TabBar::getSize)
       .def("get_hscroll", &TabBar::getHscroll)
       .def("get_active", &TabBar::getActive)
       .def("get_focus_index", &TabBar::getFocusIndex)
+      .def("get_bg_color", &TabBar::getBgColor)
+      .def("get_fg_color", &TabBar::getFgColor)
+      .def("get_bg_active_color", &TabBar::getBgActiveColor)
+      .def("get_fg_active_color", &TabBar::getFgActiveColor)
       .def("get_bounds", &TabBar::getBounds)
       .def("on_change", &TabBar::onChange, nb::arg("callback"));
 
   nb::class_<MessageBox, GameObject>(m, "MessageBox")
       .def(nb::init<const std::string &, const std::string &,
-                     const std::vector<std::string> &, Vector2, Vector2>(),
+                     const std::vector<std::string> &, Vector2, Vector2,
+                     Color, Color>(),
            nb::arg("title"), nb::arg("message"), nb::arg("buttons"),
-           nb::arg("position"), nb::arg("size"))
+           nb::arg("position"), nb::arg("size"),
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255})
       .def("set_title", &MessageBox::setTitle, nb::arg("title"))
       .def("set_message", &MessageBox::setMessage, nb::arg("message"))
       .def("set_buttons", &MessageBox::setButtons, nb::arg("buttons"))
       .def("set_position", &MessageBox::setPosition, nb::arg("position"))
       .def("set_size", &MessageBox::setSize, nb::arg("size"))
+      .def("set_bg_color", &MessageBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &MessageBox::setFgColor, nb::arg("color"))
       .def("get_title", &MessageBox::getTitle)
       .def("get_message", &MessageBox::getMessage)
       .def("get_buttons", &MessageBox::getButtons)
       .def("get_position", &MessageBox::getPosition)
       .def("get_size", &MessageBox::getSize)
       .def("get_last_button", &MessageBox::getLastButton)
+      .def("get_bg_color", &MessageBox::getBgColor)
+      .def("get_fg_color", &MessageBox::getFgColor)
       .def("get_bounds", &MessageBox::getBounds)
       .def("on_button", &MessageBox::onButton, nb::arg("callback"));
 
   nb::class_<TextInputBox, GameObject>(m, "TextInputBox")
       .def(nb::init<const std::string &, const std::string &,
-                     const std::vector<std::string> &, Vector2, Vector2>(),
+                     const std::vector<std::string> &, Vector2, Vector2,
+                     Color, Color>(),
            nb::arg("title"), nb::arg("message"), nb::arg("buttons"),
-           nb::arg("position"), nb::arg("size"))
+           nb::arg("position"), nb::arg("size"),
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255})
       .def("set_title", &TextInputBox::setTitle, nb::arg("title"))
       .def("set_message", &TextInputBox::setMessage, nb::arg("message"))
       .def("set_content", &TextInputBox::setContent, nb::arg("content"))
@@ -1074,6 +1108,8 @@ NB_MODULE(_beam, m) {
       .def("set_secret_view", &TextInputBox::setSecretView, nb::arg("secret_view"))
       .def("set_position", &TextInputBox::setPosition, nb::arg("position"))
       .def("set_size", &TextInputBox::setSize, nb::arg("size"))
+      .def("set_bg_color", &TextInputBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &TextInputBox::setFgColor, nb::arg("color"))
       .def("get_title", &TextInputBox::getTitle)
       .def("get_message", &TextInputBox::getMessage)
       .def("get_content", &TextInputBox::getContent)
@@ -1082,6 +1118,8 @@ NB_MODULE(_beam, m) {
       .def("get_position", &TextInputBox::getPosition)
       .def("get_size", &TextInputBox::getSize)
       .def("get_last_button", &TextInputBox::getLastButton)
+      .def("get_bg_color", &TextInputBox::getBgColor)
+      .def("get_fg_color", &TextInputBox::getFgColor)
       .def("get_bounds", &TextInputBox::getBounds)
       .def("on_button", &TextInputBox::onButton, nb::arg("callback"));
 

@@ -16,15 +16,17 @@ protected:
   Vector2 position;
   Vector2 size;
   int lastButton;
+  Color bg;
+  Color fg;
 
   std::function<void(MessageBox *, SharedManager, int)> onButtonCallback;
 
 public:
   MessageBox(const std::string &title, const std::string &message,
              const std::vector<std::string> &buttons, Vector2 position,
-             Vector2 size)
+             Vector2 size, Color bg = LIGHTGRAY, Color fg = DARKGRAY)
       : title(title), message(message), buttons(buttons), position(position),
-        size(size), lastButton(-1) {}
+        size(size), lastButton(-1), bg(bg), fg(fg) {}
 
   void draw(SharedManager) override;
 
@@ -33,6 +35,8 @@ public:
   void setButtons(const std::vector<std::string> &buttons);
   void setPosition(Vector2 position);
   void setSize(Vector2 size);
+  void setBgColor(Color color);
+  void setFgColor(Color color);
 
   const std::string &getTitle() const;
   const std::string &getMessage() const;
@@ -40,6 +44,8 @@ public:
   Vector2 getPosition() const;
   Vector2 getSize() const;
   int getLastButton() const;
+  Color getBgColor() const;
+  Color getFgColor() const;
 
   const Rectangle getBounds() const;
 

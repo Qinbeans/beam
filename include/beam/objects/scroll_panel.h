@@ -16,13 +16,16 @@ protected:
   Rectangle content;
   Vector2 scroll;
   Rectangle view;
+  Color bg;
+  Color fg;
 
   std::vector<std::shared_ptr<GameObject>> buffer;
 
 public:
-  ScrollPanel(Vector2 position, Vector2 size, Rectangle content)
+  ScrollPanel(Vector2 position, Vector2 size, Rectangle content,
+              Color bg = {245, 245, 245, 255}, Color fg = {131, 131, 131, 255})
       : position(position), size(size), content(content), scroll{0, 0},
-        view{0, 0, 0, 0} {}
+        view{0, 0, 0, 0}, bg(bg), fg(fg) {}
 
   template <typename T> ScrollPanel &operator<<(std::shared_ptr<T> child) {
     static_assert(std::is_base_of<Node, T>::value,
@@ -40,12 +43,16 @@ public:
   void setSize(Vector2);
   void setContent(Rectangle);
   void setScroll(Vector2);
+  void setBgColor(Color color);
+  void setFgColor(Color color);
 
   Vector2 getPosition() const;
   Vector2 getSize() const;
   Rectangle getContent() const;
   Vector2 getScroll() const;
   Rectangle getView() const;
+  Color getBgColor() const;
+  Color getFgColor() const;
 
   const Rectangle getBounds() const;
   template <typename T> T *getChildAs(int index) {

@@ -21,7 +21,17 @@ void WindowBox::draw(SharedManager manager) {
     return;
   }
 
-  if (GuiWindowBox(getBounds(), title.c_str()) && closeCallback) {
+  int prevBaseNormal = GuiGetStyle(STATUSBAR, BASE_COLOR_NORMAL);
+  int prevTextNormal = GuiGetStyle(STATUSBAR, TEXT_COLOR_NORMAL);
+  GuiSetStyle(STATUSBAR, BASE_COLOR_NORMAL, ColorToInt(bg));
+  GuiSetStyle(STATUSBAR, TEXT_COLOR_NORMAL, ColorToInt(fg));
+
+  bool closed = GuiWindowBox(getBounds(), title.c_str());
+
+  GuiSetStyle(STATUSBAR, BASE_COLOR_NORMAL, prevBaseNormal);
+  GuiSetStyle(STATUSBAR, TEXT_COLOR_NORMAL, prevTextNormal);
+
+  if (closed && closeCallback) {
     closeCallback(this, manager);
   }
 
@@ -43,11 +53,19 @@ void WindowBox::setPosition(Vector2 position) { this->position = position; }
 
 void WindowBox::setSize(Vector2 size) { this->size = size; }
 
+void WindowBox::setBgColor(Color color) { bg = color; }
+
+void WindowBox::setFgColor(Color color) { fg = color; }
+
 const std::string &WindowBox::getTitle() const { return title; }
 
 Vector2 WindowBox::getPosition() const { return position; }
 
 Vector2 WindowBox::getSize() const { return size; }
+
+Color WindowBox::getBgColor() const { return bg; }
+
+Color WindowBox::getFgColor() const { return fg; }
 
 void WindowBox::onClose(std::function<void(WindowBox *, SharedManager)> callback) {
   closeCallback = callback;

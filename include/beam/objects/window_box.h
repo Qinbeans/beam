@@ -15,14 +15,18 @@ protected:
   std::string title;
   Vector2 position;
   Vector2 size;
+  Color bg;
+  Color fg;
 
   std::vector<std::shared_ptr<GameObject>> buffer;
 
   std::function<void(WindowBox *, SharedManager)> closeCallback;
 
 public:
-  WindowBox(const std::string &title, Vector2 position, Vector2 size)
-      : GameObject("WindowBox"), title(title), position(position), size(size) {}
+  WindowBox(const std::string &title, Vector2 position, Vector2 size,
+            Color bg = LIGHTGRAY, Color fg = DARKGRAY)
+      : GameObject("WindowBox"), title(title), position(position), size(size),
+        bg(bg), fg(fg) {}
 
   template <typename T> WindowBox &operator<<(std::shared_ptr<T> child) {
     static_assert(std::is_base_of<Node, T>::value,
@@ -39,10 +43,14 @@ public:
   void setTitle(const std::string &title);
   void setPosition(Vector2 position);
   void setSize(Vector2 size);
+  void setBgColor(Color color);
+  void setFgColor(Color color);
 
   const std::string &getTitle() const;
   Vector2 getPosition() const;
   Vector2 getSize() const;
+  Color getBgColor() const;
+  Color getFgColor() const;
 
   const Rectangle getBounds() const;
 
