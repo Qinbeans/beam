@@ -1,0 +1,49 @@
+name: Version Bump
+
+# Manually triggered: pick a bump size, this opens a PR that bumps the
+# version in CMakeLists.txt and pyproject.toml. Merging that PR triggers
+# release.yml, which builds the Linux Python wheel and publishes a GitHub
+# Release.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version part to bump"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump version
+        id: bump
+        run: |
+          NEW_VERSION=$(python3 scripts/bump_version.py "${{ inputs.bump }}")
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Open release PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Bump version to v${{ steps.bump.outputs.version }}"
+          branch: release/v${{ steps.bump.outputs.version }}
+          title: "Release v${{ steps.bump.outputs.version }}"
+          body: |
+            Automated ${{ inputs.bump }} version bump to v${{ steps.bump.outputs.version }}.
+
+            Merging this PR tags the merge commit `v${{ steps.bump.outputs.version }}`
+            and triggers the release workflow, which builds the Linux Python
+            wheel (X11 + Wayland both included) and attaches it to a new
+            GitHub Release.
+          labels: release

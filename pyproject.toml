@@ -1,0 +1,15 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "nanobind>=2.4"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "beam-engine"
+version = "1.0.0"
+description = "Python bindings for the beam game engine"
+requires-python = "==3.13.14"
+
+[tool.scikit-build]
+minimum-version = "0.10"
+build-dir = "build/{wheel_tag}"
+wheel.packages = ["python/beam"]
+cmake.args = ["-DBEAM_BUILD_PYTHON_BINDINGS=ON", "-DBEAM_BUILD_EXAMPLES=OFF"]
