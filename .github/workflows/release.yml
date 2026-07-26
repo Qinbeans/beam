@@ -1,0 +1,109 @@
+name: Release
+
+# Fires when a release/vX.Y.Z PR (opened by version-bump.yml) is merged to
+# main. Tags the merge commit, builds the Linux Python wheel (both X11 and
+# Wayland backends compiled in, selected at runtime), smoke-tests that the
+# wheel actually imports, and publishes a GitHub Release with it attached.
+#
+# Windows is a secondary requirement and intentionally not built here yet:
+# the CMake python-bindings path (MSVC, the WHOLE_ARCHIVE genex, the
+# wayland-related pkg-config lookups) has only been exercised on Linux. Add
+# a windows-latest job below once that's been validated.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    if: >
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v')
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Extract version from branch name
+        id: version
+        run: |
+          REF="${{ github.event.pull_request.head.ref }}"
+          echo "version=${REF#release/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Tag release commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+  build-linux:
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.tag.outputs.version }}
+
+      - name: Install X11 + Wayland development packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+            libwayland-dev libxkbcommon-dev wayland-protocols pkg-config
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Build wheel
+        run: uv build --wheel --python 3.13.14
+
+      - name: Smoke-test the built wheel
+        run: |
+          uv venv .smoke-venv --python 3.13.14
+          uv pip install --python .smoke-venv/bin/python dist/*.whl
+          .smoke-venv/bin/python -c "
+          import beam
+          n = beam.Node('smoke')
+          n.set_position(1, 2)
+          assert n.get_position().x == 1
+          # touch every bound polymorphic class so a missing vtable/typeinfo
+          # (the failure mode this guards against) surfaces here, not for a
+          # user after the release is published.
+          for cls in (beam.Node, beam.Event, beam.Scene, beam.SceneManager,
+                      beam.GameObject, beam.Text, beam.Button, beam.Input,
+                      beam.Sprite, beam.Frame, beam.TileMap):
+              assert cls is not None
+          print('beam import smoke test OK')
+          "
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-linux-x86_64
+          path: dist/*.whl
+
+  publish:
+    needs: [tag, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download wheel artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wheel-linux-x86_64
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.tag.outputs.version }}
+          name: v${{ needs.tag.outputs.version }}
+          generate_release_notes: true
+          files: dist/*.whl

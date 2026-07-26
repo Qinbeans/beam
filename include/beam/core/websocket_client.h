@@ -54,9 +54,9 @@ namespace beam {
         std::function<void()> m_open_handler;
         std::function<void()> m_close_handler;
 
-        void on_open(websocketpp::connection_hdl hdl);
-        void on_close(websocketpp::connection_hdl hdl);
-        void on_message(websocketpp::connection_hdl hdl, message_ptr msg);
+        void on_open(websocketpp::connection_hdl);
+        void on_close(websocketpp::connection_hdl);
+        void on_message(websocketpp::connection_hdl, message_ptr msg);
         void run();
     };
 

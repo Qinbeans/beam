@@ -14,9 +14,52 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build" FORCE)
 endif()
 
-set(RAYLIB_VERSION 5.5)
+# Position-independent code for all targets (including fetched dependencies
+# like raylib/glfw), so beam and its dependencies can also be linked into the
+# Python extension module built below.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+set(RAYLIB_VERSION 6.0)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
 if (NOT raylib_FOUND) # If there's none, fetch and build raylib
+  # Pick the windowing backends for raylib's bundled GLFW. Each one needs its
+  # own development headers, so enable every backend whose dependencies are
+  # actually installed and let GLFW choose between them at runtime (it prefers
+  # Wayland when WAYLAND_DISPLAY is set, and falls back to X11). Building only
+  # one backend would produce binaries that cannot open a window on the other
+  # kind of session.
+  if (UNIX AND NOT APPLE)
+    find_package(X11)
+    if (X11_FOUND AND X11_Xrandr_FOUND AND X11_Xinerama_FOUND
+        AND X11_Xcursor_FOUND AND X11_Xi_FOUND)
+      set(BEAM_GLFW_X11 ON)
+    else()
+      set(BEAM_GLFW_X11 OFF)
+    endif()
+
+    set(BEAM_GLFW_WAYLAND OFF)
+    find_package(PkgConfig QUIET)
+    if (PkgConfig_FOUND)
+      pkg_check_modules(BEAM_WAYLAND QUIET
+        wayland-client>=0.2.7 wayland-cursor>=0.2.7 wayland-egl>=0.2.7 xkbcommon>=0.5.0)
+      find_program(BEAM_WAYLAND_SCANNER wayland-scanner)
+      if (BEAM_WAYLAND_FOUND AND BEAM_WAYLAND_SCANNER)
+        set(BEAM_GLFW_WAYLAND ON)
+      endif()
+    endif()
+
+    if (NOT BEAM_GLFW_X11 AND NOT BEAM_GLFW_WAYLAND)
+      message(FATAL_ERROR
+        "Neither the X11 nor the Wayland development packages were found. "
+        "Install libX11/libXrandr/libXinerama/libXcursor/libXi development "
+        "headers, or wayland-devel plus libxkbcommon-devel and wayland-scanner.")
+    endif()
+
+    message(STATUS "raylib/GLFW backends -- X11: ${BEAM_GLFW_X11}, Wayland: ${BEAM_GLFW_WAYLAND}")
+    set(GLFW_BUILD_X11 ${BEAM_GLFW_X11} CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_WAYLAND ${BEAM_GLFW_WAYLAND} CACHE BOOL "" FORCE)
+  endif()
+
   include(FetchContent)
   FetchContent_Declare(
     raylib
@@ -49,7 +92,11 @@ FetchContent_Declare(
   GIT_TAG        0.8.2 # Using a stable release version
   CMAKE_ARGS    -DCMAKE_CXX_STANDARD=20
 )
+# websocketpp's own CMakeLists.txt declares a cmake_minimum_required below 3.5,
+# which modern CMake refuses to configure. Raise the policy floor just for it.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 FetchContent_MakeAvailable(websocketpp)
+unset(CMAKE_POLICY_VERSION_MINIMUM)
 
 # Source files
 set(BEAM_CORE_SOURCES
@@ -72,6 +119,7 @@ set(BEAM_OBJECTS_SOURCES
     src/objects/sprite.cpp
     src/objects/input.cpp
     src/objects/frame.cpp
+    src/objects/tilemap.cpp
 )
 
 # Create library
@@ -86,6 +134,7 @@ set_target_properties(beam PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
+    POSITION_INDEPENDENT_CODE ON
 )
 
 # Include directories
@@ -93,11 +142,17 @@ target_include_directories(beam
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>
-        $<BUILD_INTERFACE:${websocketpp_SOURCE_DIR}>
         $<INSTALL_INTERFACE:websocketpp>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# asio/websocketpp are vendored dependencies; mark them SYSTEM so their
+# C++20-incompatible warnings (e.g. template-id-cdtor) don't hit -Werror.
+target_include_directories(beam SYSTEM
+    PUBLIC
+        $<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>
+        $<BUILD_INTERFACE:${websocketpp_SOURCE_DIR}>
 )
 
 # Link dependencies
@@ -149,6 +204,27 @@ if(BEAM_BUILD_EXAMPLES)
     endif()
 endif()
 
+# Python bindings (nanobind)
+option(BEAM_BUILD_PYTHON_BINDINGS "Build Python bindings for beam (requires nanobind)" OFF)
+if(BEAM_BUILD_PYTHON_BINDINGS)
+    find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
+
+    execute_process(
+        COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        OUTPUT_VARIABLE NB_DIR
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+    find_package(nanobind CONFIG REQUIRED)
+
+    nanobind_add_module(_beam python/src/bindings.cpp)
+    target_link_libraries(_beam PRIVATE beam)
+    target_compile_features(_beam PRIVATE cxx_std_20)
+
+    install(TARGETS _beam LIBRARY DESTINATION beam)
+endif()
+
 # Installation configuration
 include(GNUInstallDirs)
 
@@ -159,13 +235,15 @@ install(TARGETS beam raylib glfw
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_BINARY_DIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/raylib
 )
 
 # Install headers
 install(DIRECTORY include/beam
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.h"
+)
+install(FILES include/raylib.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 # Export targets

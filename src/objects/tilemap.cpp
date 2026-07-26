@@ -16,7 +16,7 @@ TileMap::TileMap(const std::string &name,
       tilesPerRow(1), tilesPerColumn(1), totalTileCount(1),
       textureLoaded(false) {
   // Initialize empty texture
-  baseTexture = {0};
+  baseTexture = {0, 0, 0, 0, 0};
 }
 
 // Constructor for procedurally generated tilemap
@@ -36,7 +36,7 @@ TileMap::TileMap(const std::string &name, const std::string &texturePath,
   if (!texturePath.empty()) {
     loadTexture(texturePath);
   } else {
-    baseTexture = {0};
+    baseTexture = {0, 0, 0, 0, 0};
   }
 
   // Generate tiles if randomizer is provided
@@ -167,7 +167,7 @@ void TileMap::regenerateArea(int startX, int startY, int width, int height) {
   }
 }
 
-void TileMap::draw(SharedManager manager) {
+void TileMap::draw(SharedManager) {
   if (!isActive() || !textureLoaded || baseTexture.id == 0)
     return;
 

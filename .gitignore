@@ -7,3 +7,4 @@ game2.tar.gz
 debug.log
 .DS_Store
 compile_commands.json
+.claude

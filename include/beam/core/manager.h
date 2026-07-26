@@ -25,6 +25,13 @@ private:
 public:
   Manager() : bg(RAYWHITE), isclosed(false) {}
 
+  // Manager owns Assets via unique_ptr and is always shared through
+  // SharedManager; deleting these explicitly (rather than leaving them
+  // implicitly deleted) keeps compilers from having to instantiate the
+  // asset map's copy constructor just to determine copyability.
+  Manager(const Manager &) = delete;
+  Manager &operator=(const Manager &) = delete;
+
   bool hasAsset(const std::string &name) {
     return !assets.empty() && assets.find(name) != assets.end();
   }

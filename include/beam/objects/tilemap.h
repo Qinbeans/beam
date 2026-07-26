@@ -81,6 +81,7 @@ public:
   void regenerateArea(int startX, int startY, int width, int height);
 
   void draw(SharedManager) override;
+
   void update(float, SharedManager) override;
 }; // TileMap
 

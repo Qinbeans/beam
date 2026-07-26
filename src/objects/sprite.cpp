@@ -18,16 +18,24 @@ Sprite::Sprite(SharedManager manager, const std::string &name, Vector2 position,
   }
 }
 
+// Declared in the header, so it is Sprite's key function: this definition is
+// what makes the compiler emit Sprite's vtable and typeinfo.
+Sprite::~Sprite() {}
+
 void Sprite::draw(SharedManager manager) {
   GameObject::draw(manager);
   auto texture = manager->getAsset<Texture2D>(name + "Texture");
   DrawTextureEx(texture, position, rotation, scale, tint);
-  drawCallback(this, manager);
+  if (drawCallback) {
+    drawCallback(this, manager);
+  }
 }
 
 void Sprite::update(float delta, SharedManager manager) {
   GameObject::update(delta, manager);
-  updateCallback(delta, this, manager);
+  if (updateCallback) {
+    updateCallback(delta, this, manager);
+  }
 }
 
 void Sprite::setPosition(Vector2 position) { this->position = position; }

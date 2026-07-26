@@ -113,7 +113,7 @@ namespace beam {
         return m_connected;
     }
 
-    void WebSocketClient::on_open(websocketpp::connection_hdl hdl) {
+    void WebSocketClient::on_open(websocketpp::connection_hdl) {
         m_connected = true;
         std::cout << "Connection opened" << std::endl;
 
@@ -122,7 +122,7 @@ namespace beam {
         }
     }
 
-    void WebSocketClient::on_close(websocketpp::connection_hdl hdl) {
+    void WebSocketClient::on_close(websocketpp::connection_hdl) {
         m_connected = false;
         std::cout << "Connection closed" << std::endl;
 
@@ -131,7 +131,7 @@ namespace beam {
         }
     }
 
-    void WebSocketClient::on_message(websocketpp::connection_hdl hdl, message_ptr msg) {
+    void WebSocketClient::on_message(websocketpp::connection_hdl, message_ptr msg) {
         std::string payload = msg->get_payload();
 
         if (m_message_handler) {
