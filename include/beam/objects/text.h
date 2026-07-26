@@ -9,21 +9,25 @@ namespace beam {
 class Text : public GameObject {
 private:
   std::string content;
-  int fontSize;
+  float fontSize;
+  float fontSpacing;
+  std::string fontName;
   Color color;
 
 public:
-  Text(const std::string &text, float x, float y, int size = 20);
+  Text(const std::string &text, float x, float y, const std::string &fontName = "default", float fontSize = 20.0f, float fontSpacing = 1.0f);
 
   void draw(SharedManager) override;
 
   void setText(const std::string &text);
   void setColor(Color newColor);
-  void setFontSize(int size);
+  void setFontName(const std::string &fontName);
+  void setFontSize(float size);
+  void setFontSpacing(float spacing);
 
   const std::string &getText() const;
   Color getColor() const;
-  int getFontSize() const;
+  float getFontSize() const;
 };
 
 } // namespace beam

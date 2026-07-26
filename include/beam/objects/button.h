@@ -10,6 +10,7 @@ class Button : public GameObject {
 protected:
   std::string text;
   float fontSize;
+  float fontSpacing;
   Vector2 position;
   Vector2 size;
   Padding padding;
@@ -17,6 +18,7 @@ protected:
   Color fg;
   Color bgHover;
   Color fgHover;
+  std::string fontName;
   std::function<void(float, Button *, SharedManager)> updateCallback;
   std::function<void(Button *, SharedManager)> hoverCallback;
   std::function<void(Button *, SharedManager)> clickCallback;
@@ -25,19 +27,21 @@ public:
   /**
    * @brief Construct a new Button object
    */
-  Button(const std::string &text, float fontSize, Vector2 position,
+  Button(const std::string &text, float fontSize, float fontSpacing, Vector2 position,
          Vector2 size, Padding padding, Color bg, Color fg, Color bgHover,
-         Color fgHover)
-      : text(text), fontSize(fontSize), position(position), size(size),
+         Color fgHover, const std::string &fontName = "default")
+      : text(text), fontSize(fontSize), fontSpacing(fontSpacing), position(position), size(size),
         padding(padding), bg(bg), fg(fg), bgHover(bgHover), fgHover(fgHover),
-        updateCallback(nullptr), hoverCallback(nullptr),
+        fontName(fontName), updateCallback(nullptr), hoverCallback(nullptr),
         clickCallback(nullptr) {}
 
   void draw(SharedManager) override;
   void update(float, SharedManager) override;
 
   void setText(const std::string &text);
+  void setFontName(const std::string &fontName);
   void setFontSize(float fontSize);
+  void setFontSpacing(float fontSpacing);
   void setPosition(Vector2 position);
   void setSize(Vector2 size);
   void setPadding(Padding padding);

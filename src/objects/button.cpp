@@ -10,8 +10,8 @@ void Button::draw(SharedManager manager) {
     return;
   }
   Font font;
-  if (manager->hasAsset("buttonFont")) {
-    font = manager->getAsset<Font>("buttonFont");
+  if (manager->hasAsset(fontName)) {
+    font = manager->getAsset<Font>(fontName);
   } else {
     font = GetFontDefault();
   }
@@ -22,10 +22,10 @@ void Button::draw(SharedManager manager) {
 
   if (isHovered()) {
     DrawRectangle(position.x, position.y, width, height, bgHover);
-    DrawText(text.c_str(), text_position.x, text_position.y, fontSize, fgHover);
+    DrawTextEx(font, text.c_str(), text_position, fontSize, fontSpacing, fgHover);
   } else {
     DrawRectangle(position.x, position.y, width, height, bg);
-    DrawText(text.c_str(), text_position.x, text_position.y, fontSize, fg);
+    DrawTextEx(font, text.c_str(), text_position, fontSize, fontSpacing, fg);
   }
 }
 
@@ -80,7 +80,11 @@ void Button::update(float dt, SharedManager manager) {
 
 void Button::setText(const std::string &text) { this->text = text; }
 
+void Button::setFontName(const std::string &fontName) { this->fontName = fontName; }
+
 void Button::setFontSize(float fontSize) { this->fontSize = fontSize; }
+
+void Button::setFontSpacing(float fontSpacing) { this->fontSpacing = fontSpacing; }
 
 void Button::setPosition(Vector2 position) { this->position = position; }
 

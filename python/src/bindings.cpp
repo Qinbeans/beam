@@ -416,23 +416,28 @@ NB_MODULE(_beam, m) {
       .def(nb::init<const std::string &>(), nb::arg("name") = "GameObject");
 
   nb::class_<Text, GameObject>(m, "Text")
-      .def(nb::init<const std::string &, float, float, int>(), nb::arg("text"),
-           nb::arg("x"), nb::arg("y"), nb::arg("size") = 20)
+      .def(nb::init<const std::string &, float, float, const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("x"), nb::arg("y"), nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
       .def("set_text", &Text::setText, nb::arg("text"))
       .def("set_color", &Text::setColor, nb::arg("color"))
+      .def("set_font_name", &Text::setFontName, nb::arg("font_name"))
       .def("set_font_size", &Text::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &Text::setFontSpacing, nb::arg("spacing"))
       .def("get_text", &Text::getText)
       .def("get_color", &Text::getColor)
       .def("get_font_size", &Text::getFontSize);
 
   nb::class_<Button, GameObject>(m, "Button")
-      .def(nb::init<const std::string &, float, Vector2, Vector2, Padding, Color, Color,
-                     Color, Color>(),
-           nb::arg("text"), nb::arg("font_size"), nb::arg("position"), nb::arg("size"),
-           nb::arg("padding"), nb::arg("bg"), nb::arg("fg"), nb::arg("bg_hover"),
-           nb::arg("fg_hover"))
+      .def(nb::init<const std::string &, float, float, Vector2, Vector2, Padding, Color, Color,
+                     Color, Color, const std::string &>(),
+           nb::arg("text"), nb::arg("font_size"), nb::arg("font_spacing"), nb::arg("position"),
+           nb::arg("size"), nb::arg("padding"), nb::arg("bg"), nb::arg("fg"),
+           nb::arg("bg_hover"), nb::arg("fg_hover"), nb::arg("font_name") = "default")
       .def("set_text", &Button::setText, nb::arg("text"))
+      .def("set_font_name", &Button::setFontName, nb::arg("font_name"))
       .def("set_font_size", &Button::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &Button::setFontSpacing, nb::arg("spacing"))
       .def("set_position", &Button::setPosition, nb::arg("position"))
       .def("set_size", &Button::setSize, nb::arg("size"))
       .def("set_padding", &Button::setPadding, nb::arg("padding"))
@@ -448,11 +453,12 @@ NB_MODULE(_beam, m) {
       .def("on_click", &Button::onClick, nb::arg("callback"));
 
   nb::class_<Input, Button>(m, "Input")
-      .def(nb::init<const std::string &, float, Vector2, Vector2, Padding, Color, Color,
-                     Color, Color, float>(),
-           nb::arg("placeholder"), nb::arg("font_size"), nb::arg("position"),
-           nb::arg("size"), nb::arg("padding"), nb::arg("bg"), nb::arg("fg"),
-           nb::arg("bg_hover"), nb::arg("fg_hover"), nb::arg("cursor_blink_time") = 0.5f)
+      .def(nb::init<const std::string &, float, float, Vector2, Vector2, Padding, Color, Color,
+                     Color, Color, float, const std::string &>(),
+           nb::arg("placeholder"), nb::arg("font_size"), nb::arg("font_spacing"),
+           nb::arg("position"), nb::arg("size"), nb::arg("padding"), nb::arg("bg"),
+           nb::arg("fg"), nb::arg("bg_hover"), nb::arg("fg_hover"),
+           nb::arg("cursor_blink_time") = 0.5f, nb::arg("font_name") = "default")
       .def("set_content", &Input::setContent, nb::arg("content"))
       .def("set_focused", &Input::setFocused, nb::arg("focused"))
       .def("get_content", &Input::getContent)

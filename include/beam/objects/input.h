@@ -24,10 +24,12 @@ public:
   /**
    * @brief Construct a new Input object
    */
-  Input(const std::string &placeholder, float fontSize, Vector2 position,
-        Vector2 size, Padding padding, Color bg, Color fg, Color bgHover,
-        Color fgHover, float cursorBlinkTime = 0.5f)
-      : Button("", fontSize, position, size, padding, bg, fg, bgHover, fgHover),
+  Input(const std::string &placeholder, float fontSize, float fontSpacing,
+        Vector2 position, Vector2 size, Padding padding, Color bg, Color fg,
+        Color bgHover, Color fgHover, float cursorBlinkTime = 0.5f,
+        const std::string &fontName = "default")
+      : Button("", fontSize, fontSpacing, position, size, padding, bg, fg,
+               bgHover, fgHover, fontName),
         content(""), placeholder(placeholder), cursorVisible(false),
         cursorBlinkTime(cursorBlinkTime) {}
 

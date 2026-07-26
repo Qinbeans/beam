@@ -3,29 +3,38 @@
 
 namespace beam {
 
-Text::Text(const std::string &text, float x, float y, int size)
-    : GameObject("Text"), content(text), fontSize(size), color(BLACK) {
+Text::Text(const std::string &text, float x, float y, const std::string &fontName, float fontSize, float fontSpacing)
+    : GameObject("Text"), content(text), fontSize(fontSize), fontSpacing(fontSpacing), fontName(fontName), color(BLACK) {
   position = {x, y};
 }
 
-void Text::draw(SharedManager managers) {
-  if (active) {
-    DrawText(content.c_str(), static_cast<int>(position.x),
-             static_cast<int>(position.y), fontSize, color);
+void Text::draw(SharedManager manager) {
+  Font font;
+  if (manager->hasAsset(fontName)) {
+    font = manager->getAsset<Font>(fontName);
+  } else {
+    font = GetFontDefault();
   }
-  GameObject::draw(managers);
+  if (active) {
+    DrawTextEx(font, content.c_str(), position, fontSize, fontSpacing, color);
+  }
+  GameObject::draw(manager);
 }
 
 void Text::setText(const std::string &text) { content = text; }
 
 void Text::setColor(Color newColor) { color = newColor; }
 
-void Text::setFontSize(int size) { fontSize = size; }
+void Text::setFontName(const std::string &fontName) { this->fontName = fontName; }
+
+void Text::setFontSize(float size) { fontSize = size; }
+
+void Text::setFontSpacing(float spacing) { fontSpacing = spacing; }
 
 const std::string &Text::getText() const { return content; }
 
 Color Text::getColor() const { return color; }
 
-int Text::getFontSize() const { return fontSize; }
+float Text::getFontSize() const { return fontSize; }
 
 } // namespace beam
