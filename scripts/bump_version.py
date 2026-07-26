@@ -19,6 +19,7 @@ PYPROJECT_VERSION_RE = re.compile(r'(?m)(^version = ")(\d+)\.(\d+)\.(\d+)(")')
 
 
 def read_current_version() -> tuple[int, int, int]:
+    """Read the current X.Y.Z version out of CMakeLists.txt."""
     match = CMAKE_VERSION_RE.search(CMAKE_FILE.read_text())
     if not match:
         raise SystemExit("could not find a version in CMakeLists.txt")
@@ -26,6 +27,7 @@ def read_current_version() -> tuple[int, int, int]:
 
 
 def bump(version: tuple[int, int, int], kind: str) -> tuple[int, int, int]:
+    """Return `version` bumped at the major, minor, or patch component."""
     major, minor, patch = version
     if kind == "major":
         return major + 1, 0, 0
@@ -37,9 +39,12 @@ def bump(version: tuple[int, int, int], kind: str) -> tuple[int, int, int]:
 
 
 def write_version(new_version: tuple[int, int, int]) -> None:
-    new_str = "%d.%d.%d" % new_version
+    """Write `new_version` into CMakeLists.txt and pyproject.toml."""
+    new_str = "{}.{}.{}".format(*new_version)
 
-    cmake_text, n = CMAKE_VERSION_RE.subn(rf"\g<1>{new_str}\g<5>", CMAKE_FILE.read_text())
+    cmake_text, n = CMAKE_VERSION_RE.subn(
+        rf"\g<1>{new_str}\g<5>", CMAKE_FILE.read_text()
+    )
     if n != 1:
         raise SystemExit("expected exactly one version to update in CMakeLists.txt")
     CMAKE_FILE.write_text(cmake_text)
@@ -53,13 +58,14 @@ def write_version(new_version: tuple[int, int, int]) -> None:
 
 
 def main() -> None:
+    """Bump the version according to CLI args and print the new version."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bump", choices=["major", "minor", "patch"])
     args = parser.parse_args()
 
     new_version = bump(read_current_version(), args.bump)
     write_version(new_version)
-    print("%d.%d.%d" % new_version)
+    print("{}.{}.{}".format(*new_version))
 
 
 if __name__ == "__main__":

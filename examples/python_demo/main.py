@@ -10,30 +10,39 @@ Run with:  python examples/python_demo/main.py
 
 import beam
 
+MAX_FRAMES = 120
+ESC_KEY = 256
+
 
 class CounterScene(beam.Scene):
-    def __init__(self):
+    """Scene that counts frames and closes the app after MAX_FRAMES."""
+
+    def __init__(self) -> None:
+        """Build the scene and its frame-counter label."""
         super().__init__("counter")
         self.frames = 0
         self.label = beam.Text("Hello from Python", 20, 100, 20)
         self.add(self.label)
 
-    def on_enter(self, manager):
+    def on_enter(self, manager: beam.Manager) -> None:
+        """Set the background color when the scene becomes active."""
         manager.set_background_color(beam.Color(30, 30, 40, 255))
 
-    def update(self, delta_time, manager):
+    def update(self, _delta_time: float, manager: beam.Manager) -> None:
+        """Advance the frame counter and close after MAX_FRAMES or ESC."""
         self.frames += 1
         self.label.set_text(f"frame {self.frames}")
         # Close after a short while so the demo exits on its own.
-        if self.frames >= 120 or manager.is_key_pressed(256):  # 256 = ESC
+        if self.frames >= MAX_FRAMES or manager.is_key_pressed(ESC_KEY):
             manager.close()
 
-    def draw(self, manager):
-        # Draw the children registered via add().
+    def draw(self, manager: beam.Manager) -> None:
+        """Draw the children registered via add()."""
         beam.Scene.draw(self, manager)
 
 
-def main():
+def main() -> None:
+    """Run the counter scene until it closes itself."""
     app = beam.App("beam python demo", 640, 360, 60)
     manager = app.get_manager()
 

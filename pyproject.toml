@@ -13,3 +13,71 @@ minimum-version = "0.10"
 build-dir = "build/{wheel_tag}"
 wheel.packages = ["python/beam"]
 cmake.args = ["-DBEAM_BUILD_PYTHON_BINDINGS=ON", "-DBEAM_BUILD_EXAMPLES=OFF"]
+
+[tool.ruff]
+target-version = "py313"
+indent-width = 4
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+  "E",
+  "D",
+  "F",
+  "W",
+  "C90",
+  "N",
+  "B",
+  "B9",
+  "I",
+  "ERA",
+  "YTT",
+  "ANN",
+  "ASYNC",
+  "S",
+  "BLE",
+  "FBT",
+  "A",
+  "COM",
+  "C4",
+  "FIX",
+  "FA",
+  "PIE",
+  "T20",
+  "PT",
+  "Q",
+  "SIM",
+  "TC",
+  "ARG",
+  "PTH",
+  "FLY",
+  "PL",
+  "UP",
+  "FURB",
+  "RUF"
+]
+fixable = ["ALL"]
+ignore = ["TC001", "FBT001", "FBT003", "COM812", "D203", "D213", "S101", "RUF012", "D100"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"**/{tests,docs,tools}/*" = ["E402"]
+"examples/**" = ["T201"]
+"scripts/*" = ["T201"]
+
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+extraPaths = ["python"]
+reportMissingTypeStubs = false
+reportUnknownVariableType = false
+reportUnknownMemberType = false
+reportMissingParameterType = false
+reportUnknownParameterType = false
+reportUnknownArgumentType = false
+reportAssignmentType = false
+reportMissingModuleSource = false
+reportAttributeAccessIssue = false
+reportUnusedFunction = false
+reportIncompatibleMethodOverride = false
