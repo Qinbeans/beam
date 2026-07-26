@@ -71,8 +71,17 @@ NB_MODULE(_beam, m) {
 
   // -- raylib value types used throughout beam's public API -----------------
 
+  // Vector2/Color/Rectangle/Padding are raylib aggregates with no
+  // user-declared constructor, so `nb::init<Args...>()` would need C++20's
+  // parenthesized-aggregate-init to call them as Vector2(x, y). This module
+  // also has to stay compatible with websocketpp (via WebSocketClient,
+  // bound below), which is incompatible with strict C++20, so these use
+  // brace-init in a placement-new __init__ instead, which only needs C++11.
   nb::class_<Vector2>(m, "Vector2")
-      .def(nb::init<float, float>(), nb::arg("x") = 0.0f, nb::arg("y") = 0.0f)
+      .def(
+          "__init__",
+          [](Vector2 *self, float x, float y) { new (self) Vector2{x, y}; },
+          nb::arg("x") = 0.0f, nb::arg("y") = 0.0f)
       .def_rw("x", &Vector2::x)
       .def_rw("y", &Vector2::y)
       .def("__repr__", [](const Vector2 &v) {
@@ -80,8 +89,11 @@ NB_MODULE(_beam, m) {
       });
 
   nb::class_<Color>(m, "Color")
-      .def(nb::init<unsigned char, unsigned char, unsigned char, unsigned char>(),
-           nb::arg("r") = 0, nb::arg("g") = 0, nb::arg("b") = 0, nb::arg("a") = 255)
+      .def(
+          "__init__",
+          [](Color *self, unsigned char r, unsigned char g, unsigned char b,
+             unsigned char a) { new (self) Color{r, g, b, a}; },
+          nb::arg("r") = 0, nb::arg("g") = 0, nb::arg("b") = 0, nb::arg("a") = 255)
       .def_rw("r", &Color::r)
       .def_rw("g", &Color::g)
       .def_rw("b", &Color::b)
@@ -92,8 +104,13 @@ NB_MODULE(_beam, m) {
       });
 
   nb::class_<Rectangle>(m, "Rectangle")
-      .def(nb::init<float, float, float, float>(), nb::arg("x") = 0.0f,
-           nb::arg("y") = 0.0f, nb::arg("width") = 0.0f, nb::arg("height") = 0.0f)
+      .def(
+          "__init__",
+          [](Rectangle *self, float x, float y, float width, float height) {
+            new (self) Rectangle{x, y, width, height};
+          },
+          nb::arg("x") = 0.0f, nb::arg("y") = 0.0f, nb::arg("width") = 0.0f,
+          nb::arg("height") = 0.0f)
       .def_rw("x", &Rectangle::x)
       .def_rw("y", &Rectangle::y)
       .def_rw("width", &Rectangle::width)
@@ -105,8 +122,13 @@ NB_MODULE(_beam, m) {
       });
 
   nb::class_<Padding>(m, "Padding")
-      .def(nb::init<int, int, int, int>(), nb::arg("top") = 0, nb::arg("left") = 0,
-           nb::arg("bottom") = 0, nb::arg("right") = 0)
+      .def(
+          "__init__",
+          [](Padding *self, int top, int left, int bottom, int right) {
+            new (self) Padding{top, left, bottom, right};
+          },
+          nb::arg("top") = 0, nb::arg("left") = 0, nb::arg("bottom") = 0,
+          nb::arg("right") = 0)
       .def_rw("top", &Padding::top)
       .def_rw("left", &Padding::left)
       .def_rw("bottom", &Padding::bottom)

@@ -1,15 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 project(Beam VERSION 1.0.2 LANGUAGES CXX)
 
-# beam itself only needs C++17 (nothing in src/ or include/beam/ uses a C++20
-# language feature). Stay on C++17 for the main library/executables: under
-# strict -std=c++20, GCC treats websocketpp 0.8.2's pre-C++20 constructor-name
-# idiom (e.g. `basic<concurrency,names>(...)`) as an ill-formed parse error,
-# not just a warning, so marking its headers SYSTEM doesn't help. The Python
-# bindings module (_beam) does need C++20, for parenthesized aggregate init of
-# Vector2/Color/Rectangle in nanobind's nb::init<>() calls; it declares that
-# requirement on itself via target_compile_features(cxx_std_20), independent
-# of this project-wide default.
+# Nothing in src/, include/beam/, or python/src/bindings.cpp needs a C++20
+# language feature, so stay on C++17 project-wide. In particular: under strict
+# -std=c++20, GCC treats websocketpp 0.8.2's pre-C++20 constructor-name idiom
+# (e.g. `basic<concurrency,names>(...)`) as an ill-formed parse error, not
+# just a warning, so marking its headers SYSTEM doesn't help. Both the beam
+# library and the Python bindings module (_beam) include websocketpp (the
+# latter transitively, via websocket_client.h for the WebSocketClient
+# binding), so both need to avoid C++20 here.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -226,9 +225,12 @@ if(BEAM_BUILD_PYTHON_BINDINGS)
     list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
     find_package(nanobind CONFIG REQUIRED)
 
+    # _beam includes websocket_client.h (for the WebSocketClient binding),
+    # which pulls in websocketpp; that's incompatible with strict C++20 (see
+    # the CMAKE_CXX_STANDARD comment above), so this stays on the project's
+    # C++17 default rather than opting into C++20 the way it briefly did.
     nanobind_add_module(_beam python/src/bindings.cpp)
     target_link_libraries(_beam PRIVATE beam)
-    target_compile_features(_beam PRIVATE cxx_std_20)
 
     install(TARGETS _beam LIBRARY DESTINATION beam)
 endif()
