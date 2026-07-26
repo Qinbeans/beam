@@ -323,6 +323,7 @@ NB_MODULE(_beam, m) {
       .def("get_window_width", &Manager::getWindowWidth)
       .def("get_window_height", &Manager::getWindowHeight)
       .def("get_fps", &Manager::getFPS)
+      .def("is_window_resized", &Manager::isWindowResized)
       .def("get_key_pressed", &Manager::getKeyPressed)
       .def("get_char_pressed", &Manager::getCharPressed)
       .def("get_mouse_x", &Manager::getMouseX)

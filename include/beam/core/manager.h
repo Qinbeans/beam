@@ -100,6 +100,7 @@ public:
   int getWindowWidth() const { return GetRenderWidth(); }
   int getWindowHeight() const { return GetRenderHeight(); }
   int getFPS() const { return GetFPS(); }
+  bool isWindowResized() const { return IsWindowResized(); }
 
   // Input handling methods
   int getKeyPressed() const { return GetKeyPressed(); }
