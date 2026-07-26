@@ -15,15 +15,15 @@ public:
 
   void init(SharedManager manager) override {
     int exampleState = manager->getState<int>("example state");
-    auto text = std::make_shared<Text>("Game Scene", 400, 300, 40);
+    auto text = std::make_shared<Text>("Game Scene", 400, 300, "default", 40);
     auto stateText = std::make_shared<Text>(
-        "State: " + std::to_string(exampleState), 400, 350, 20);
+        "State: " + std::to_string(exampleState), 400, 350, "default", 20);
 
     auto menuFrame = std::make_shared<Frame>("Menu Frame", Vector2{10, 10},
                                              Rectangle{10, 10, 140, 600}, BLUE);
 
     auto exitButton = std::make_shared<Button>(
-        "Exit", 20, Vector2{10, 10}, Vector2{100, 25}, Padding{10, 10, 10, 10},
+        "Exit", 20, 1, Vector2{10, 10}, Vector2{100, 25}, Padding{10, 10, 10, 10},
         RED, WHITE, MAROON, WHITE);
 
     exitButton->onClick([&](Button *, SharedManager manager) {

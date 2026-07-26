@@ -13,7 +13,6 @@ private:
   std::string content;
   std::string placeholder;
 
-  bool cursorVisible;
   bool focused;
   float cursorBlinkTime;
 
@@ -30,7 +29,7 @@ public:
         const std::string &fontName = "default")
       : Button("", fontSize, fontSpacing, position, size, padding, bg, fg,
                bgHover, fgHover, fontName),
-        content(""), placeholder(placeholder), cursorVisible(false),
+        content(""), placeholder(placeholder), focused(false),
         cursorBlinkTime(cursorBlinkTime) {}
 
   void draw(SharedManager) override;

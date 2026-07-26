@@ -1,5 +1,6 @@
 #include "beam/objects/frame.h"
 #include "beam/objects/game_object.h"
+#include "raygui.h"
 
 namespace beam {
 Frame::Frame(const std::string &name, Vector2 origin, Rectangle bound, Color bg)
@@ -10,7 +11,17 @@ void Frame::draw(SharedManager managers) {
   if (!active) {
     return;
   }
-  DrawRectanglePro(bound, origin, rotation, bg);
+  if (rotation == 0.0f) {
+    // GuiPanel is raygui's axis-aligned container control; it has no
+    // rotation/origin concept, so fall back to DrawRectanglePro below when
+    // this frame is rotated.
+    int prevBackground = GuiGetStyle(DEFAULT, BACKGROUND_COLOR);
+    GuiSetStyle(DEFAULT, BACKGROUND_COLOR, ColorToInt(bg));
+    GuiPanel(bound, nullptr);
+    GuiSetStyle(DEFAULT, BACKGROUND_COLOR, prevBackground);
+  } else {
+    DrawRectanglePro(bound, origin, rotation, bg);
+  }
   for (const auto &child : buffer) {
     child->draw(managers);
   }

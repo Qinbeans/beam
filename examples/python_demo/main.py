@@ -18,11 +18,21 @@ class CounterScene(beam.Scene):
     """Scene that counts frames and closes the app after MAX_FRAMES."""
 
     def __init__(self) -> None:
-        """Build the scene and its frame-counter label."""
+        """Build the scene, its frame-counter label, and an options panel."""
         super().__init__("counter")
         self.frames = 0
-        self.label = beam.Text("Hello from Python", 20, 100, 20)
-        self.add(self.label)
+        self.label = beam.Text("Hello from Python", 20, 100)
+
+        # Frame << CheckBox, then Scene << Frame: validates that operator<<
+        # (bound as __lshift__ in Python) works for nesting game objects, not
+        # just the .add() alias.
+        self.checkbox = beam.CheckBox("Enable", beam.Vector2(20, 140), beam.Vector2(20, 20))
+        self.panel = beam.Frame(
+            "options", beam.Vector2(0, 0), beam.Rectangle(10, 120, 160, 60), beam.Color(30, 30, 40, 200)
+        )
+        self.panel << self.checkbox
+
+        self << self.label << self.panel
 
     def on_enter(self, manager: beam.Manager) -> None:
         """Set the background color when the scene becomes active."""
@@ -39,7 +49,7 @@ class CounterScene(beam.Scene):
             manager.close()
 
     def draw(self, manager: beam.Manager) -> None:
-        """Draw the children registered via add()."""
+        """Draw the children registered via <<."""
         beam.Scene.draw(self, manager)
 
 
@@ -50,9 +60,8 @@ def main() -> None:
 
     scene_manager = app.get_scene_manager()
     scene = CounterScene()
-    scene_manager.add(scene)
+    scene_manager << scene
     scene_manager.switch_to_scene("counter", manager)
-
     app.init()
     app.run()
 

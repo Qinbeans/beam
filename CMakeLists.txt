@@ -105,6 +105,29 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 FetchContent_MakeAvailable(websocketpp)
 unset(CMAKE_POLICY_VERSION_MINIMUM)
 
+# Add raygui (single-header immediate-mode GUI library built on raylib).
+# raygui has no top-level CMakeLists.txt, so it can't be pulled in with
+# FetchContent_MakeAvailable(); populate its sources and wrap them in our
+# own INTERFACE target instead.
+set(RAYGUI_VERSION 5.0)
+FetchContent_Declare(
+  raygui
+  GIT_REPOSITORY https://github.com/raysan5/raygui.git
+  GIT_TAG        ${RAYGUI_VERSION}
+)
+FetchContent_GetProperties(raygui)
+if (NOT raygui_POPULATED)
+  set(FETCHCONTENT_QUIET NO)
+  FetchContent_Populate(raygui)
+endif()
+
+add_library(raygui INTERFACE)
+target_include_directories(raygui INTERFACE
+    $<BUILD_INTERFACE:${raygui_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(raygui INTERFACE raylib)
+
 # Source files
 set(BEAM_CORE_SOURCES
     src/core/node.cpp
@@ -112,6 +135,7 @@ set(BEAM_CORE_SOURCES
     src/core/app.cpp
     src/core/logger.cpp
     src/core/websocket_client.cpp
+    src/core/raygui_impl.cpp
 )
 
 set(BEAM_SCENE_SOURCES
@@ -127,6 +151,34 @@ set(BEAM_OBJECTS_SOURCES
     src/objects/input.cpp
     src/objects/frame.cpp
     src/objects/tilemap.cpp
+    src/objects/checkbox.cpp
+    src/objects/toggle.cpp
+    src/objects/slider.cpp
+    src/objects/progress_bar.cpp
+    src/objects/group_box.cpp
+    src/objects/line.cpp
+    src/objects/dummy_rec.cpp
+    src/objects/status_bar.cpp
+    src/objects/grid.cpp
+    src/objects/label_button.cpp
+    src/objects/toggle_group.cpp
+    src/objects/toggle_slider.cpp
+    src/objects/combo_box.cpp
+    src/objects/slider_bar.cpp
+    src/objects/dropdown_box.cpp
+    src/objects/spinner.cpp
+    src/objects/value_box.cpp
+    src/objects/value_box_float.cpp
+    src/objects/window_box.cpp
+    src/objects/scroll_panel.cpp
+    src/objects/list_view.cpp
+    src/objects/tab_bar.cpp
+    src/objects/message_box.cpp
+    src/objects/text_input_box.cpp
+    src/objects/color_picker.cpp
+    src/objects/color_panel.cpp
+    src/objects/color_bar_alpha.cpp
+    src/objects/color_bar_hue.cpp
 )
 
 # Create library
@@ -154,16 +206,18 @@ target_include_directories(beam
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# asio/websocketpp are vendored dependencies; mark them SYSTEM so their
-# C++20-incompatible warnings (e.g. template-id-cdtor) don't hit -Werror.
+# asio/websocketpp/raygui are vendored dependencies; mark them SYSTEM so
+# their warnings (e.g. template-id-cdtor, raygui's C-style casts) don't hit
+# -Werror.
 target_include_directories(beam SYSTEM
     PUBLIC
         $<BUILD_INTERFACE:${asio_SOURCE_DIR}/asio/include>
         $<BUILD_INTERFACE:${websocketpp_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${raygui_SOURCE_DIR}/src>
 )
 
 # Link dependencies
-target_link_libraries(beam PUBLIC raylib)
+target_link_libraries(beam PUBLIC raylib raygui)
 
 # Add preprocessor definitions for websocketpp
 target_compile_definitions(beam PRIVATE ASIO_STANDALONE _WEBSOCKETPP_CPP11_STRICT_)
@@ -239,7 +293,7 @@ endif()
 include(GNUInstallDirs)
 
 # Install the library and its dependencies
-install(TARGETS beam raylib glfw
+install(TARGETS beam raylib glfw raygui
     EXPORT beam-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -253,6 +307,9 @@ install(DIRECTORY include/beam
     FILES_MATCHING PATTERN "*.h"
 )
 install(FILES include/raylib.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+install(FILES ${raygui_SOURCE_DIR}/src/raygui.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 

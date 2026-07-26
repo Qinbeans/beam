@@ -21,14 +21,43 @@
 #include "beam/core/node.h"
 #include "beam/core/websocket_client.h"
 #include "beam/objects/button.h"
+#include "beam/objects/checkbox.h"
+#include "beam/objects/color_bar_alpha.h"
+#include "beam/objects/color_bar_hue.h"
+#include "beam/objects/color_panel.h"
+#include "beam/objects/color_picker.h"
+#include "beam/objects/combo_box.h"
+#include "beam/objects/dropdown_box.h"
+#include "beam/objects/dummy_rec.h"
 #include "beam/objects/frame.h"
 #include "beam/objects/game_object.h"
+#include "beam/objects/grid.h"
+#include "beam/objects/group_box.h"
 #include "beam/objects/input.h"
+#include "beam/objects/label_button.h"
+#include "beam/objects/line.h"
+#include "beam/objects/list_view.h"
+#include "beam/objects/message_box.h"
+#include "beam/objects/progress_bar.h"
+#include "beam/objects/scroll_panel.h"
+#include "beam/objects/slider.h"
+#include "beam/objects/slider_bar.h"
+#include "beam/objects/spinner.h"
 #include "beam/objects/sprite.h"
+#include "beam/objects/status_bar.h"
+#include "beam/objects/tab_bar.h"
 #include "beam/objects/text.h"
+#include "beam/objects/text_input_box.h"
 #include "beam/objects/tilemap.h"
+#include "beam/objects/toggle.h"
+#include "beam/objects/toggle_group.h"
+#include "beam/objects/toggle_slider.h"
+#include "beam/objects/value_box.h"
+#include "beam/objects/value_box_float.h"
+#include "beam/objects/window_box.h"
 #include "beam/scene/scene.h"
 #include "beam/scene/scene_manager.h"
+#include "raygui.h"
 
 namespace nb = nanobind;
 using namespace beam;
@@ -257,6 +286,9 @@ NB_MODULE(_beam, m) {
       },
       nb::arg("text"), nb::arg("font_size"), nb::arg("spacing") = 1.0f,
       nb::arg("font") = nullptr);
+  m.def(
+      "load_gui_style", [](const std::string &path) { GuiLoadStyle(path.c_str()); },
+      nb::arg("path"));
 
   // -- core -------------------------------------------------------------
 
@@ -480,6 +512,627 @@ NB_MODULE(_beam, m) {
       .def("on_focus", &Input::onFocus, nb::arg("callback"))
       .def("on_blur", &Input::onBlur, nb::arg("callback"));
 
+  nb::class_<CheckBox, GameObject>(m, "CheckBox")
+      .def(nb::init<const std::string &, Vector2, Vector2, bool, Color, Color,
+                     const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("checked") = false, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_text", &CheckBox::setText, nb::arg("text"))
+      .def("set_position", &CheckBox::setPosition, nb::arg("position"))
+      .def("set_size", &CheckBox::setSize, nb::arg("size"))
+      .def("set_checked", &CheckBox::setChecked, nb::arg("checked"))
+      .def("set_bg_color", &CheckBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &CheckBox::setFgColor, nb::arg("color"))
+      .def("set_font_name", &CheckBox::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &CheckBox::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &CheckBox::setFontSpacing, nb::arg("spacing"))
+      .def("get_text", &CheckBox::getText)
+      .def("get_position", &CheckBox::getPosition)
+      .def("get_size", &CheckBox::getSize)
+      .def("is_checked", &CheckBox::isChecked)
+      .def("get_bg_color", &CheckBox::getBgColor)
+      .def("get_fg_color", &CheckBox::getFgColor)
+      .def("get_bounds", &CheckBox::getBounds)
+      .def("on_change", &CheckBox::onChange, nb::arg("callback"));
+
+  nb::class_<Toggle, GameObject>(m, "Toggle")
+      .def(nb::init<const std::string &, Vector2, Vector2, bool, Color, Color,
+                     Color, Color, const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = false, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255},
+           nb::arg("bg_active") = Color{80, 80, 80, 255},
+           nb::arg("fg_active") = Color{255, 255, 255, 255},
+           nb::arg("font_name") = "default", nb::arg("font_size") = 20.0f,
+           nb::arg("font_spacing") = 1.0f)
+      .def("set_text", &Toggle::setText, nb::arg("text"))
+      .def("set_position", &Toggle::setPosition, nb::arg("position"))
+      .def("set_size", &Toggle::setSize, nb::arg("size"))
+      .def("set_active", &Toggle::setActive, nb::arg("active"))
+      .def("set_bg_color", &Toggle::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &Toggle::setFgColor, nb::arg("color"))
+      .def("set_bg_active_color", &Toggle::setBgActiveColor, nb::arg("color"))
+      .def("set_fg_active_color", &Toggle::setFgActiveColor, nb::arg("color"))
+      .def("set_font_name", &Toggle::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &Toggle::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &Toggle::setFontSpacing, nb::arg("spacing"))
+      .def("get_text", &Toggle::getText)
+      .def("get_position", &Toggle::getPosition)
+      .def("get_size", &Toggle::getSize)
+      .def("is_active", &Toggle::isActive)
+      .def("get_bg_color", &Toggle::getBgColor)
+      .def("get_fg_color", &Toggle::getFgColor)
+      .def("get_bg_active_color", &Toggle::getBgActiveColor)
+      .def("get_fg_active_color", &Toggle::getFgActiveColor)
+      .def("get_bounds", &Toggle::getBounds)
+      .def("on_change", &Toggle::onChange, nb::arg("callback"));
+
+  nb::class_<Slider, GameObject>(m, "Slider")
+      .def(nb::init<Vector2, Vector2, float, float, float, Color, Color,
+                     const std::string &, const std::string &>(),
+           nb::arg("position"), nb::arg("size"), nb::arg("value") = 0.0f,
+           nb::arg("min_value") = 0.0f, nb::arg("max_value") = 1.0f,
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("text_left") = "",
+           nb::arg("text_right") = "")
+      .def("set_position", &Slider::setPosition, nb::arg("position"))
+      .def("set_size", &Slider::setSize, nb::arg("size"))
+      .def("set_value", &Slider::setValue, nb::arg("value"))
+      .def("set_range", &Slider::setRange, nb::arg("min_value"), nb::arg("max_value"))
+      .def("set_bg_color", &Slider::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &Slider::setFgColor, nb::arg("color"))
+      .def("set_text_left", &Slider::setTextLeft, nb::arg("text"))
+      .def("set_text_right", &Slider::setTextRight, nb::arg("text"))
+      .def("get_position", &Slider::getPosition)
+      .def("get_size", &Slider::getSize)
+      .def("get_value", &Slider::getValue)
+      .def("get_min_value", &Slider::getMinValue)
+      .def("get_max_value", &Slider::getMaxValue)
+      .def("get_bg_color", &Slider::getBgColor)
+      .def("get_fg_color", &Slider::getFgColor)
+      .def("get_bounds", &Slider::getBounds)
+      .def("on_change", &Slider::onChange, nb::arg("callback"));
+
+  nb::class_<ProgressBar, GameObject>(m, "ProgressBar")
+      .def(nb::init<Vector2, Vector2, float, float, float, Color, Color,
+                     const std::string &, const std::string &>(),
+           nb::arg("position"), nb::arg("size"), nb::arg("value") = 0.0f,
+           nb::arg("min_value") = 0.0f, nb::arg("max_value") = 1.0f,
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{0, 228, 48, 255}, nb::arg("text_left") = "",
+           nb::arg("text_right") = "")
+      .def("set_position", &ProgressBar::setPosition, nb::arg("position"))
+      .def("set_size", &ProgressBar::setSize, nb::arg("size"))
+      .def("set_value", &ProgressBar::setValue, nb::arg("value"))
+      .def("set_range", &ProgressBar::setRange, nb::arg("min_value"), nb::arg("max_value"))
+      .def("set_bg_color", &ProgressBar::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ProgressBar::setFgColor, nb::arg("color"))
+      .def("set_text_left", &ProgressBar::setTextLeft, nb::arg("text"))
+      .def("set_text_right", &ProgressBar::setTextRight, nb::arg("text"))
+      .def("get_position", &ProgressBar::getPosition)
+      .def("get_size", &ProgressBar::getSize)
+      .def("get_value", &ProgressBar::getValue)
+      .def("get_min_value", &ProgressBar::getMinValue)
+      .def("get_max_value", &ProgressBar::getMaxValue)
+      .def("get_bg_color", &ProgressBar::getBgColor)
+      .def("get_fg_color", &ProgressBar::getFgColor)
+      .def("get_bounds", &ProgressBar::getBounds);
+
+  nb::class_<GroupBox, GameObject>(m, "GroupBox")
+      .def(nb::init<const std::string &, Vector2, Vector2, Color>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("color") = Color{130, 130, 130, 255})
+      .def("set_text", &GroupBox::setText, nb::arg("text"))
+      .def("set_position", &GroupBox::setPosition, nb::arg("position"))
+      .def("set_size", &GroupBox::setSize, nb::arg("size"))
+      .def("set_color", &GroupBox::setColor, nb::arg("color"))
+      .def("get_text", &GroupBox::getText)
+      .def("get_position", &GroupBox::getPosition)
+      .def("get_size", &GroupBox::getSize)
+      .def("get_color", &GroupBox::getColor)
+      .def("get_bounds", &GroupBox::getBounds);
+
+  nb::class_<Line, GameObject>(m, "Line")
+      .def(nb::init<Vector2, Vector2, const std::string &, Color>(),
+           nb::arg("position"), nb::arg("size"), nb::arg("text") = "",
+           nb::arg("color") = Color{130, 130, 130, 255})
+      .def("set_text", &Line::setText, nb::arg("text"))
+      .def("set_position", &Line::setPosition, nb::arg("position"))
+      .def("set_size", &Line::setSize, nb::arg("size"))
+      .def("set_color", &Line::setColor, nb::arg("color"))
+      .def("get_text", &Line::getText)
+      .def("get_position", &Line::getPosition)
+      .def("get_size", &Line::getSize)
+      .def("get_color", &Line::getColor)
+      .def("get_bounds", &Line::getBounds);
+
+  nb::class_<DummyRec, GameObject>(m, "DummyRec")
+      .def(nb::init<const std::string &, Vector2, Vector2, Color, Color>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255})
+      .def("set_text", &DummyRec::setText, nb::arg("text"))
+      .def("set_position", &DummyRec::setPosition, nb::arg("position"))
+      .def("set_size", &DummyRec::setSize, nb::arg("size"))
+      .def("set_bg_color", &DummyRec::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &DummyRec::setFgColor, nb::arg("color"))
+      .def("get_text", &DummyRec::getText)
+      .def("get_position", &DummyRec::getPosition)
+      .def("get_size", &DummyRec::getSize)
+      .def("get_bg_color", &DummyRec::getBgColor)
+      .def("get_fg_color", &DummyRec::getFgColor)
+      .def("get_bounds", &DummyRec::getBounds)
+      .def("on_click", &DummyRec::onClick, nb::arg("callback"));
+
+  nb::class_<StatusBar, GameObject>(m, "StatusBar")
+      .def(nb::init<const std::string &, Vector2, Vector2, Color, Color>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255})
+      .def("set_text", &StatusBar::setText, nb::arg("text"))
+      .def("set_position", &StatusBar::setPosition, nb::arg("position"))
+      .def("set_size", &StatusBar::setSize, nb::arg("size"))
+      .def("set_bg_color", &StatusBar::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &StatusBar::setFgColor, nb::arg("color"))
+      .def("get_text", &StatusBar::getText)
+      .def("get_position", &StatusBar::getPosition)
+      .def("get_size", &StatusBar::getSize)
+      .def("get_bg_color", &StatusBar::getBgColor)
+      .def("get_fg_color", &StatusBar::getFgColor)
+      .def("get_bounds", &StatusBar::getBounds)
+      .def("on_click", &StatusBar::onClick, nb::arg("callback"));
+
+  nb::class_<Grid, GameObject>(m, "Grid")
+      .def(nb::init<Vector2, Vector2, float, int, Color>(), nb::arg("position"),
+           nb::arg("size"), nb::arg("spacing") = 16.0f,
+           nb::arg("subdivisions") = 4,
+           nb::arg("color") = Color{200, 200, 200, 255})
+      .def("set_position", &Grid::setPosition, nb::arg("position"))
+      .def("set_size", &Grid::setSize, nb::arg("size"))
+      .def("set_spacing", &Grid::setSpacing, nb::arg("spacing"))
+      .def("set_subdivisions", &Grid::setSubdivisions, nb::arg("subdivisions"))
+      .def("set_color", &Grid::setColor, nb::arg("color"))
+      .def("get_position", &Grid::getPosition)
+      .def("get_size", &Grid::getSize)
+      .def("get_spacing", &Grid::getSpacing)
+      .def("get_subdivisions", &Grid::getSubdivisions)
+      .def("get_color", &Grid::getColor)
+      .def("get_mouse_cell", &Grid::getMouseCell)
+      .def("get_bounds", &Grid::getBounds);
+
+  nb::class_<LabelButton, GameObject>(m, "LabelButton")
+      .def(nb::init<const std::string &, Vector2, Vector2, Color,
+                     const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_text", &LabelButton::setText, nb::arg("text"))
+      .def("set_position", &LabelButton::setPosition, nb::arg("position"))
+      .def("set_size", &LabelButton::setSize, nb::arg("size"))
+      .def("set_fg_color", &LabelButton::setFgColor, nb::arg("color"))
+      .def("set_font_name", &LabelButton::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &LabelButton::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &LabelButton::setFontSpacing, nb::arg("spacing"))
+      .def("get_text", &LabelButton::getText)
+      .def("get_position", &LabelButton::getPosition)
+      .def("get_size", &LabelButton::getSize)
+      .def("get_fg_color", &LabelButton::getFgColor)
+      .def("get_bounds", &LabelButton::getBounds)
+      .def("on_click", &LabelButton::onClick, nb::arg("callback"));
+
+  nb::class_<ToggleGroup, GameObject>(m, "ToggleGroup")
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int,
+                     Color, Color, Color, Color, const std::string &, float,
+                     float>(),
+           nb::arg("items"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = 0, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255},
+           nb::arg("bg_active") = Color{80, 80, 80, 255},
+           nb::arg("fg_active") = Color{255, 255, 255, 255},
+           nb::arg("font_name") = "default", nb::arg("font_size") = 20.0f,
+           nb::arg("font_spacing") = 1.0f)
+      .def("set_items", &ToggleGroup::setItems, nb::arg("items"))
+      .def("set_position", &ToggleGroup::setPosition, nb::arg("position"))
+      .def("set_size", &ToggleGroup::setSize, nb::arg("size"))
+      .def("set_active", &ToggleGroup::setActive, nb::arg("active"))
+      .def("set_bg_color", &ToggleGroup::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ToggleGroup::setFgColor, nb::arg("color"))
+      .def("set_bg_active_color", &ToggleGroup::setBgActiveColor, nb::arg("color"))
+      .def("set_fg_active_color", &ToggleGroup::setFgActiveColor, nb::arg("color"))
+      .def("set_font_name", &ToggleGroup::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &ToggleGroup::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &ToggleGroup::setFontSpacing, nb::arg("spacing"))
+      .def("get_items", &ToggleGroup::getItems)
+      .def("get_position", &ToggleGroup::getPosition)
+      .def("get_size", &ToggleGroup::getSize)
+      .def("get_active", &ToggleGroup::getActive)
+      .def("get_bg_color", &ToggleGroup::getBgColor)
+      .def("get_fg_color", &ToggleGroup::getFgColor)
+      .def("get_bg_active_color", &ToggleGroup::getBgActiveColor)
+      .def("get_fg_active_color", &ToggleGroup::getFgActiveColor)
+      .def("get_bounds", &ToggleGroup::getBounds)
+      .def("on_change", &ToggleGroup::onChange, nb::arg("callback"));
+
+  nb::class_<ToggleSlider, GameObject>(m, "ToggleSlider")
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int,
+                     Color, Color, const std::string &, float, float>(),
+           nb::arg("items"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = 0, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_items", &ToggleSlider::setItems, nb::arg("items"))
+      .def("set_position", &ToggleSlider::setPosition, nb::arg("position"))
+      .def("set_size", &ToggleSlider::setSize, nb::arg("size"))
+      .def("set_active", &ToggleSlider::setActive, nb::arg("active"))
+      .def("set_bg_color", &ToggleSlider::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ToggleSlider::setFgColor, nb::arg("color"))
+      .def("set_font_name", &ToggleSlider::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &ToggleSlider::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &ToggleSlider::setFontSpacing, nb::arg("spacing"))
+      .def("get_items", &ToggleSlider::getItems)
+      .def("get_position", &ToggleSlider::getPosition)
+      .def("get_size", &ToggleSlider::getSize)
+      .def("get_active", &ToggleSlider::getActive)
+      .def("get_bg_color", &ToggleSlider::getBgColor)
+      .def("get_fg_color", &ToggleSlider::getFgColor)
+      .def("get_bounds", &ToggleSlider::getBounds)
+      .def("on_change", &ToggleSlider::onChange, nb::arg("callback"));
+
+  nb::class_<ComboBox, GameObject>(m, "ComboBox")
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int,
+                     Color, Color, const std::string &, float, float>(),
+           nb::arg("items"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = 0, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_items", &ComboBox::setItems, nb::arg("items"))
+      .def("set_position", &ComboBox::setPosition, nb::arg("position"))
+      .def("set_size", &ComboBox::setSize, nb::arg("size"))
+      .def("set_active", &ComboBox::setActive, nb::arg("active"))
+      .def("set_bg_color", &ComboBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ComboBox::setFgColor, nb::arg("color"))
+      .def("set_font_name", &ComboBox::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &ComboBox::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &ComboBox::setFontSpacing, nb::arg("spacing"))
+      .def("get_items", &ComboBox::getItems)
+      .def("get_position", &ComboBox::getPosition)
+      .def("get_size", &ComboBox::getSize)
+      .def("get_active", &ComboBox::getActive)
+      .def("get_bg_color", &ComboBox::getBgColor)
+      .def("get_fg_color", &ComboBox::getFgColor)
+      .def("get_bounds", &ComboBox::getBounds)
+      .def("on_change", &ComboBox::onChange, nb::arg("callback"));
+
+  nb::class_<SliderBar, GameObject>(m, "SliderBar")
+      .def(nb::init<Vector2, Vector2, float, float, float, Color, Color,
+                     const std::string &, const std::string &>(),
+           nb::arg("position"), nb::arg("size"), nb::arg("value") = 0.0f,
+           nb::arg("min_value") = 0.0f, nb::arg("max_value") = 1.0f,
+           nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("text_left") = "",
+           nb::arg("text_right") = "")
+      .def("set_position", &SliderBar::setPosition, nb::arg("position"))
+      .def("set_size", &SliderBar::setSize, nb::arg("size"))
+      .def("set_value", &SliderBar::setValue, nb::arg("value"))
+      .def("set_range", &SliderBar::setRange, nb::arg("min_value"), nb::arg("max_value"))
+      .def("set_bg_color", &SliderBar::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &SliderBar::setFgColor, nb::arg("color"))
+      .def("set_text_left", &SliderBar::setTextLeft, nb::arg("text"))
+      .def("set_text_right", &SliderBar::setTextRight, nb::arg("text"))
+      .def("get_position", &SliderBar::getPosition)
+      .def("get_size", &SliderBar::getSize)
+      .def("get_value", &SliderBar::getValue)
+      .def("get_min_value", &SliderBar::getMinValue)
+      .def("get_max_value", &SliderBar::getMaxValue)
+      .def("get_bg_color", &SliderBar::getBgColor)
+      .def("get_fg_color", &SliderBar::getFgColor)
+      .def("get_bounds", &SliderBar::getBounds)
+      .def("on_change", &SliderBar::onChange, nb::arg("callback"));
+
+  nb::class_<DropdownBox, GameObject>(m, "DropdownBox")
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int,
+                     Color, Color, const std::string &, float, float>(),
+           nb::arg("items"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = 0, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_items", &DropdownBox::setItems, nb::arg("items"))
+      .def("set_position", &DropdownBox::setPosition, nb::arg("position"))
+      .def("set_size", &DropdownBox::setSize, nb::arg("size"))
+      .def("set_active", &DropdownBox::setActive, nb::arg("active"))
+      .def("set_open", &DropdownBox::setOpen, nb::arg("open"))
+      .def("set_bg_color", &DropdownBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &DropdownBox::setFgColor, nb::arg("color"))
+      .def("set_font_name", &DropdownBox::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &DropdownBox::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &DropdownBox::setFontSpacing, nb::arg("spacing"))
+      .def("get_items", &DropdownBox::getItems)
+      .def("get_position", &DropdownBox::getPosition)
+      .def("get_size", &DropdownBox::getSize)
+      .def("get_active", &DropdownBox::getActive)
+      .def("is_open", &DropdownBox::isOpen)
+      .def("get_bg_color", &DropdownBox::getBgColor)
+      .def("get_fg_color", &DropdownBox::getFgColor)
+      .def("get_bounds", &DropdownBox::getBounds)
+      .def("on_change", &DropdownBox::onChange, nb::arg("callback"));
+
+  nb::class_<Spinner, GameObject>(m, "Spinner")
+      .def(nb::init<const std::string &, Vector2, Vector2, int, int, int,
+                     Color, Color, const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("value") = 0, nb::arg("min_value") = 0,
+           nb::arg("max_value") = 100, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_text", &Spinner::setText, nb::arg("text"))
+      .def("set_position", &Spinner::setPosition, nb::arg("position"))
+      .def("set_size", &Spinner::setSize, nb::arg("size"))
+      .def("set_value", &Spinner::setValue, nb::arg("value"))
+      .def("set_range", &Spinner::setRange, nb::arg("min_value"), nb::arg("max_value"))
+      .def("set_edit_mode", &Spinner::setEditMode, nb::arg("edit_mode"))
+      .def("set_bg_color", &Spinner::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &Spinner::setFgColor, nb::arg("color"))
+      .def("set_font_name", &Spinner::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &Spinner::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &Spinner::setFontSpacing, nb::arg("spacing"))
+      .def("get_text", &Spinner::getText)
+      .def("get_position", &Spinner::getPosition)
+      .def("get_size", &Spinner::getSize)
+      .def("get_value", &Spinner::getValue)
+      .def("get_min_value", &Spinner::getMinValue)
+      .def("get_max_value", &Spinner::getMaxValue)
+      .def("is_edit_mode", &Spinner::isEditMode)
+      .def("get_bg_color", &Spinner::getBgColor)
+      .def("get_fg_color", &Spinner::getFgColor)
+      .def("get_bounds", &Spinner::getBounds)
+      .def("on_change", &Spinner::onChange, nb::arg("callback"));
+
+  nb::class_<ValueBox, GameObject>(m, "ValueBox")
+      .def(nb::init<const std::string &, Vector2, Vector2, int, int, int,
+                     Color, Color, const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("value") = 0, nb::arg("min_value") = 0,
+           nb::arg("max_value") = 100, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_text", &ValueBox::setText, nb::arg("text"))
+      .def("set_position", &ValueBox::setPosition, nb::arg("position"))
+      .def("set_size", &ValueBox::setSize, nb::arg("size"))
+      .def("set_value", &ValueBox::setValue, nb::arg("value"))
+      .def("set_range", &ValueBox::setRange, nb::arg("min_value"), nb::arg("max_value"))
+      .def("set_edit_mode", &ValueBox::setEditMode, nb::arg("edit_mode"))
+      .def("set_bg_color", &ValueBox::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ValueBox::setFgColor, nb::arg("color"))
+      .def("set_font_name", &ValueBox::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &ValueBox::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &ValueBox::setFontSpacing, nb::arg("spacing"))
+      .def("get_text", &ValueBox::getText)
+      .def("get_position", &ValueBox::getPosition)
+      .def("get_size", &ValueBox::getSize)
+      .def("get_value", &ValueBox::getValue)
+      .def("get_min_value", &ValueBox::getMinValue)
+      .def("get_max_value", &ValueBox::getMaxValue)
+      .def("is_edit_mode", &ValueBox::isEditMode)
+      .def("get_bg_color", &ValueBox::getBgColor)
+      .def("get_fg_color", &ValueBox::getFgColor)
+      .def("get_bounds", &ValueBox::getBounds)
+      .def("on_change", &ValueBox::onChange, nb::arg("callback"));
+
+  nb::class_<ValueBoxFloat, GameObject>(m, "ValueBoxFloat")
+      .def(nb::init<const std::string &, Vector2, Vector2, float, Color, Color,
+                     const std::string &, float, float>(),
+           nb::arg("text"), nb::arg("position"), nb::arg("size"),
+           nb::arg("value") = 0.0f, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255}, nb::arg("font_name") = "default",
+           nb::arg("font_size") = 20.0f, nb::arg("font_spacing") = 1.0f)
+      .def("set_text", &ValueBoxFloat::setText, nb::arg("text"))
+      .def("set_position", &ValueBoxFloat::setPosition, nb::arg("position"))
+      .def("set_size", &ValueBoxFloat::setSize, nb::arg("size"))
+      .def("set_value", &ValueBoxFloat::setValue, nb::arg("value"))
+      .def("set_edit_mode", &ValueBoxFloat::setEditMode, nb::arg("edit_mode"))
+      .def("set_bg_color", &ValueBoxFloat::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ValueBoxFloat::setFgColor, nb::arg("color"))
+      .def("set_font_name", &ValueBoxFloat::setFontName, nb::arg("font_name"))
+      .def("set_font_size", &ValueBoxFloat::setFontSize, nb::arg("size"))
+      .def("set_font_spacing", &ValueBoxFloat::setFontSpacing, nb::arg("spacing"))
+      .def("get_text", &ValueBoxFloat::getText)
+      .def("get_position", &ValueBoxFloat::getPosition)
+      .def("get_size", &ValueBoxFloat::getSize)
+      .def("get_value", &ValueBoxFloat::getValue)
+      .def("is_edit_mode", &ValueBoxFloat::isEditMode)
+      .def("get_bg_color", &ValueBoxFloat::getBgColor)
+      .def("get_fg_color", &ValueBoxFloat::getFgColor)
+      .def("get_bounds", &ValueBoxFloat::getBounds)
+      .def("on_change", &ValueBoxFloat::onChange, nb::arg("callback"));
+
+  nb::class_<WindowBox, GameObject>(m, "WindowBox")
+      .def(nb::init<const std::string &, Vector2, Vector2>(), nb::arg("title"),
+           nb::arg("position"), nb::arg("size"))
+      .def(
+          "add",
+          [](std::shared_ptr<WindowBox> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def(
+          "__lshift__",
+          [](std::shared_ptr<WindowBox> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def("set_title", &WindowBox::setTitle, nb::arg("title"))
+      .def("set_position", &WindowBox::setPosition, nb::arg("position"))
+      .def("set_size", &WindowBox::setSize, nb::arg("size"))
+      .def("get_title", &WindowBox::getTitle)
+      .def("get_position", &WindowBox::getPosition)
+      .def("get_size", &WindowBox::getSize)
+      .def("get_bounds", &WindowBox::getBounds)
+      .def("on_close", &WindowBox::onClose, nb::arg("callback"));
+
+  nb::class_<ScrollPanel, GameObject>(m, "ScrollPanel")
+      .def(nb::init<Vector2, Vector2, Rectangle>(), nb::arg("position"),
+           nb::arg("size"), nb::arg("content"))
+      .def(
+          "add",
+          [](std::shared_ptr<ScrollPanel> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def(
+          "__lshift__",
+          [](std::shared_ptr<ScrollPanel> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def("set_position", &ScrollPanel::setPosition, nb::arg("position"))
+      .def("set_size", &ScrollPanel::setSize, nb::arg("size"))
+      .def("set_content", &ScrollPanel::setContent, nb::arg("content"))
+      .def("set_scroll", &ScrollPanel::setScroll, nb::arg("scroll"))
+      .def("get_position", &ScrollPanel::getPosition)
+      .def("get_size", &ScrollPanel::getSize)
+      .def("get_content", &ScrollPanel::getContent)
+      .def("get_scroll", &ScrollPanel::getScroll)
+      .def("get_view", &ScrollPanel::getView)
+      .def("get_bounds", &ScrollPanel::getBounds);
+
+  nb::class_<ListView, GameObject>(m, "ListView")
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int,
+                     Color, Color>(),
+           nb::arg("items"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = -1, nb::arg("bg") = Color{200, 200, 200, 255},
+           nb::arg("fg") = Color{80, 80, 80, 255})
+      .def("set_items", &ListView::setItems, nb::arg("items"))
+      .def("set_position", &ListView::setPosition, nb::arg("position"))
+      .def("set_size", &ListView::setSize, nb::arg("size"))
+      .def("set_scroll_index", &ListView::setScrollIndex, nb::arg("scroll_index"))
+      .def("set_active", &ListView::setActive, nb::arg("active"))
+      .def("set_bg_color", &ListView::setBgColor, nb::arg("color"))
+      .def("set_fg_color", &ListView::setFgColor, nb::arg("color"))
+      .def("get_items", &ListView::getItems)
+      .def("get_position", &ListView::getPosition)
+      .def("get_size", &ListView::getSize)
+      .def("get_scroll_index", &ListView::getScrollIndex)
+      .def("get_active", &ListView::getActive)
+      .def("get_bg_color", &ListView::getBgColor)
+      .def("get_fg_color", &ListView::getFgColor)
+      .def("get_focus_index", &ListView::getFocusIndex)
+      .def("get_bounds", &ListView::getBounds)
+      .def("on_change", &ListView::onChange, nb::arg("callback"));
+
+  nb::class_<TabBar, GameObject>(m, "TabBar")
+      .def(nb::init<const std::vector<std::string> &, Vector2, Vector2, int>(),
+           nb::arg("items"), nb::arg("position"), nb::arg("size"),
+           nb::arg("active") = 0)
+      .def("set_items", &TabBar::setItems, nb::arg("items"))
+      .def("set_position", &TabBar::setPosition, nb::arg("position"))
+      .def("set_size", &TabBar::setSize, nb::arg("size"))
+      .def("set_hscroll", &TabBar::setHscroll, nb::arg("hscroll"))
+      .def("set_active", &TabBar::setActive, nb::arg("active"))
+      .def("get_items", &TabBar::getItems)
+      .def("get_position", &TabBar::getPosition)
+      .def("get_size", &TabBar::getSize)
+      .def("get_hscroll", &TabBar::getHscroll)
+      .def("get_active", &TabBar::getActive)
+      .def("get_focus_index", &TabBar::getFocusIndex)
+      .def("get_bounds", &TabBar::getBounds)
+      .def("on_change", &TabBar::onChange, nb::arg("callback"));
+
+  nb::class_<MessageBox, GameObject>(m, "MessageBox")
+      .def(nb::init<const std::string &, const std::string &,
+                     const std::vector<std::string> &, Vector2, Vector2>(),
+           nb::arg("title"), nb::arg("message"), nb::arg("buttons"),
+           nb::arg("position"), nb::arg("size"))
+      .def("set_title", &MessageBox::setTitle, nb::arg("title"))
+      .def("set_message", &MessageBox::setMessage, nb::arg("message"))
+      .def("set_buttons", &MessageBox::setButtons, nb::arg("buttons"))
+      .def("set_position", &MessageBox::setPosition, nb::arg("position"))
+      .def("set_size", &MessageBox::setSize, nb::arg("size"))
+      .def("get_title", &MessageBox::getTitle)
+      .def("get_message", &MessageBox::getMessage)
+      .def("get_buttons", &MessageBox::getButtons)
+      .def("get_position", &MessageBox::getPosition)
+      .def("get_size", &MessageBox::getSize)
+      .def("get_last_button", &MessageBox::getLastButton)
+      .def("get_bounds", &MessageBox::getBounds)
+      .def("on_button", &MessageBox::onButton, nb::arg("callback"));
+
+  nb::class_<TextInputBox, GameObject>(m, "TextInputBox")
+      .def(nb::init<const std::string &, const std::string &,
+                     const std::vector<std::string> &, Vector2, Vector2>(),
+           nb::arg("title"), nb::arg("message"), nb::arg("buttons"),
+           nb::arg("position"), nb::arg("size"))
+      .def("set_title", &TextInputBox::setTitle, nb::arg("title"))
+      .def("set_message", &TextInputBox::setMessage, nb::arg("message"))
+      .def("set_content", &TextInputBox::setContent, nb::arg("content"))
+      .def("set_buttons", &TextInputBox::setButtons, nb::arg("buttons"))
+      .def("set_secret_view", &TextInputBox::setSecretView, nb::arg("secret_view"))
+      .def("set_position", &TextInputBox::setPosition, nb::arg("position"))
+      .def("set_size", &TextInputBox::setSize, nb::arg("size"))
+      .def("get_title", &TextInputBox::getTitle)
+      .def("get_message", &TextInputBox::getMessage)
+      .def("get_content", &TextInputBox::getContent)
+      .def("get_buttons", &TextInputBox::getButtons)
+      .def("is_secret_view", &TextInputBox::isSecretView)
+      .def("get_position", &TextInputBox::getPosition)
+      .def("get_size", &TextInputBox::getSize)
+      .def("get_last_button", &TextInputBox::getLastButton)
+      .def("get_bounds", &TextInputBox::getBounds)
+      .def("on_button", &TextInputBox::onButton, nb::arg("callback"));
+
+  nb::class_<ColorPicker, GameObject>(m, "ColorPicker")
+      .def(nb::init<Vector2, Vector2, Color>(), nb::arg("position"),
+           nb::arg("size"), nb::arg("color") = Color{230, 41, 55, 255})
+      .def("set_color", &ColorPicker::setColor, nb::arg("color"))
+      .def("set_position", &ColorPicker::setPosition, nb::arg("position"))
+      .def("set_size", &ColorPicker::setSize, nb::arg("size"))
+      .def("get_color", &ColorPicker::getColor)
+      .def("get_position", &ColorPicker::getPosition)
+      .def("get_size", &ColorPicker::getSize)
+      .def("get_bounds", &ColorPicker::getBounds)
+      .def("on_change", &ColorPicker::onChange, nb::arg("callback"));
+
+  nb::class_<ColorPanel, GameObject>(m, "ColorPanel")
+      .def(nb::init<Vector2, Vector2, Color>(), nb::arg("position"),
+           nb::arg("size"), nb::arg("color") = Color{230, 41, 55, 255})
+      .def("set_color", &ColorPanel::setColor, nb::arg("color"))
+      .def("set_position", &ColorPanel::setPosition, nb::arg("position"))
+      .def("set_size", &ColorPanel::setSize, nb::arg("size"))
+      .def("get_color", &ColorPanel::getColor)
+      .def("get_position", &ColorPanel::getPosition)
+      .def("get_size", &ColorPanel::getSize)
+      .def("get_bounds", &ColorPanel::getBounds)
+      .def("on_change", &ColorPanel::onChange, nb::arg("callback"));
+
+  nb::class_<ColorBarAlpha, GameObject>(m, "ColorBarAlpha")
+      .def(nb::init<Vector2, Vector2, float>(), nb::arg("position"),
+           nb::arg("size"), nb::arg("alpha") = 1.0f)
+      .def("set_alpha", &ColorBarAlpha::setAlpha, nb::arg("alpha"))
+      .def("set_position", &ColorBarAlpha::setPosition, nb::arg("position"))
+      .def("set_size", &ColorBarAlpha::setSize, nb::arg("size"))
+      .def("get_alpha", &ColorBarAlpha::getAlpha)
+      .def("get_position", &ColorBarAlpha::getPosition)
+      .def("get_size", &ColorBarAlpha::getSize)
+      .def("get_bounds", &ColorBarAlpha::getBounds)
+      .def("on_change", &ColorBarAlpha::onChange, nb::arg("callback"));
+
+  nb::class_<ColorBarHue, GameObject>(m, "ColorBarHue")
+      .def(nb::init<Vector2, Vector2, float>(), nb::arg("position"),
+           nb::arg("size"), nb::arg("hue") = 0.0f)
+      .def("set_hue", &ColorBarHue::setHue, nb::arg("hue"))
+      .def("set_position", &ColorBarHue::setPosition, nb::arg("position"))
+      .def("set_size", &ColorBarHue::setSize, nb::arg("size"))
+      .def("get_hue", &ColorBarHue::getHue)
+      .def("get_position", &ColorBarHue::getPosition)
+      .def("get_size", &ColorBarHue::getSize)
+      .def("get_bounds", &ColorBarHue::getBounds)
+      .def("on_change", &ColorBarHue::onChange, nb::arg("callback"));
+
   nb::class_<Sprite, GameObject>(m, "Sprite")
       .def(nb::init<SharedManager, const std::string &, Vector2, Rectangle, Color, Color>(),
            nb::arg("manager"), nb::arg("name"), nb::arg("position"), nb::arg("bound"),
@@ -504,6 +1157,13 @@ NB_MODULE(_beam, m) {
            nb::arg("origin"), nb::arg("bound"), nb::arg("bg") = Color{0, 0, 0, 0})
       .def(
           "add",
+          [](std::shared_ptr<Frame> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def(
+          "__lshift__",
           [](std::shared_ptr<Frame> self, std::shared_ptr<GameObject> child) {
             *self << child;
             return self;

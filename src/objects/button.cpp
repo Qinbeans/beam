@@ -1,6 +1,7 @@
 #include "beam/objects/button.h"
 #include "beam/core/manager.h"
 #include "beam/objects/game_object.h"
+#include "raygui.h"
 #include "raylib.h"
 
 namespace beam {
@@ -15,18 +16,41 @@ void Button::draw(SharedManager manager) {
   } else {
     font = GetFontDefault();
   }
-  const float width = size.x + padding.left + padding.right;
-  const float height = size.y + padding.top + padding.bottom;
-  const Vector2 text_position = {this->position.x + padding.left,
-                                 this->position.y + padding.top};
 
-  if (isHovered()) {
-    DrawRectangle(position.x, position.y, width, height, bgHover);
-    DrawTextEx(font, text.c_str(), text_position, fontSize, fontSpacing, fgHover);
-  } else {
-    DrawRectangle(position.x, position.y, width, height, bg);
-    DrawTextEx(font, text.c_str(), text_position, fontSize, fontSpacing, fg);
-  }
+  Font prevFont = GuiGetFont();
+  int prevTextSize = GuiGetStyle(DEFAULT, TEXT_SIZE);
+  int prevTextSpacing = GuiGetStyle(DEFAULT, TEXT_SPACING);
+  int prevBorderWidth = GuiGetStyle(BUTTON, BORDER_WIDTH);
+  int prevBaseNormal = GuiGetStyle(BUTTON, BASE_COLOR_NORMAL);
+  int prevTextNormal = GuiGetStyle(BUTTON, TEXT_COLOR_NORMAL);
+  int prevBaseFocused = GuiGetStyle(BUTTON, BASE_COLOR_FOCUSED);
+  int prevTextFocused = GuiGetStyle(BUTTON, TEXT_COLOR_FOCUSED);
+  int prevBasePressed = GuiGetStyle(BUTTON, BASE_COLOR_PRESSED);
+  int prevTextPressed = GuiGetStyle(BUTTON, TEXT_COLOR_PRESSED);
+
+  GuiSetFont(font);
+  GuiSetStyle(DEFAULT, TEXT_SIZE, static_cast<int>(fontSize));
+  GuiSetStyle(DEFAULT, TEXT_SPACING, static_cast<int>(fontSpacing));
+  GuiSetStyle(BUTTON, BORDER_WIDTH, 0);
+  GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, ColorToInt(bg));
+  GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, ColorToInt(fg));
+  GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, ColorToInt(bgHover));
+  GuiSetStyle(BUTTON, TEXT_COLOR_FOCUSED, ColorToInt(fgHover));
+  GuiSetStyle(BUTTON, BASE_COLOR_PRESSED, ColorToInt(bgHover));
+  GuiSetStyle(BUTTON, TEXT_COLOR_PRESSED, ColorToInt(fgHover));
+
+  GuiButton(getBounds(), text.c_str());
+
+  GuiSetFont(prevFont);
+  GuiSetStyle(DEFAULT, TEXT_SIZE, prevTextSize);
+  GuiSetStyle(DEFAULT, TEXT_SPACING, prevTextSpacing);
+  GuiSetStyle(BUTTON, BORDER_WIDTH, prevBorderWidth);
+  GuiSetStyle(BUTTON, BASE_COLOR_NORMAL, prevBaseNormal);
+  GuiSetStyle(BUTTON, TEXT_COLOR_NORMAL, prevTextNormal);
+  GuiSetStyle(BUTTON, BASE_COLOR_FOCUSED, prevBaseFocused);
+  GuiSetStyle(BUTTON, TEXT_COLOR_FOCUSED, prevTextFocused);
+  GuiSetStyle(BUTTON, BASE_COLOR_PRESSED, prevBasePressed);
+  GuiSetStyle(BUTTON, TEXT_COLOR_PRESSED, prevTextPressed);
 }
 
 const Rectangle Button::getBounds() const {
