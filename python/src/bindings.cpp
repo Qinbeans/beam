@@ -185,6 +185,13 @@ NB_MODULE(_beam, m) {
             *self << child;
             return self;
           },
+          nb::arg("child"))
+      .def(
+          "__lshift__",
+          [](std::shared_ptr<Event> self, std::shared_ptr<Node> child) {
+            *self << child;
+            return self;
+          },
           nb::arg("child"));
 
   nb::class_<WebSocketClient>(m, "WebSocketClient")
@@ -210,6 +217,13 @@ NB_MODULE(_beam, m) {
             return self;
           },
           nb::arg("child"))
+      .def(
+          "__lshift__",
+          [](std::shared_ptr<Scene> self, std::shared_ptr<Node> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
       .def("on_enter", &Scene::onEnter, nb::arg("manager"))
       .def("on_exit", &Scene::onExit, nb::arg("manager"));
 
@@ -217,6 +231,13 @@ NB_MODULE(_beam, m) {
       .def(nb::init<const std::string &>(), nb::arg("name") = "SceneManager")
       .def(
           "add",
+          [](std::shared_ptr<SceneManager> self, std::shared_ptr<Scene> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("scene"))
+      .def(
+          "__lshift__",
           [](std::shared_ptr<SceneManager> self, std::shared_ptr<Scene> child) {
             *self << child;
             return self;
