@@ -1,9 +1,11 @@
 // Python bindings for the beam engine, using nanobind.
 //
 // Scope: beam's own API (Node hierarchy, scenes, game objects, App, Manager,
-// WebSocketClient, logger). raylib itself is intentionally not bound here -
-// beam's public headers only pull in a handful of raylib value types
-// (Vector2, Color, Rectangle), which are bound below purely as plumbing.
+// WebSocketClient, logger). raylib itself is intentionally not bound beyond
+// what beam's public headers need: a handful of raylib value types
+// (Vector2, Color, Rectangle, Padding), bound below purely as plumbing, and
+// the four asset resource types (Image, Texture2D, Font, Sound) that
+// Manager's asset registry stores - see the AssetHandle note below.
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/function.h>
@@ -63,6 +65,61 @@ struct PyScene : Scene {
     NB_OVERRIDE_NAME("on_exit", onExit, manager);
   }
 };
+
+// raylib's Image/Texture2D/Font/Sound are plain structs with no destructor;
+// beam owns them via ImageAsset/TextureAsset/FontAsset/SoundAsset (asset.h),
+// which call the matching Unload* when the Manager drops or replaces the
+// asset. Manager::setAsset<T> copies the struct by value, but that copy is
+// shallow - e.g. Image::data is a raw pointer, Font owns heap-allocated
+// glyph arrays - so once a handle's resource has been handed to the
+// Manager, this wrapper must stop owning it, or both sides would Unload*
+// the same underlying handle. `owned` tracks that, and each handle is
+// move-only so a resource has exactly one owner at a time. get_*_asset
+// below returns handles with owned=false: a non-owning view, valid only as
+// long as the Manager keeps that asset around - the same borrow contract
+// Manager::getAsset<T>'s C++ callers (button.cpp, sprite.cpp) already rely
+// on.
+template <typename T, void (*Unload)(T)> struct AssetHandle {
+  T data{};
+  bool owned = false;
+
+  AssetHandle() = default;
+  explicit AssetHandle(T value, bool owned_ = true) : data(value), owned(owned_) {}
+
+  AssetHandle(const AssetHandle &) = delete;
+  AssetHandle &operator=(const AssetHandle &) = delete;
+
+  AssetHandle(AssetHandle &&other) noexcept : data(other.data), owned(other.owned) {
+    other.owned = false;
+  }
+  AssetHandle &operator=(AssetHandle &&other) noexcept {
+    if (this != &other) {
+      release();
+      data = other.data;
+      owned = other.owned;
+      other.owned = false;
+    }
+    return *this;
+  }
+
+  ~AssetHandle() { release(); }
+
+  // Called once `data` has been copied into a Manager asset, so this
+  // handle no longer owns the underlying resource.
+  void disown() { owned = false; }
+
+private:
+  void release() {
+    if (owned)
+      Unload(data);
+    owned = false;
+  }
+};
+
+using ImageHandle = AssetHandle<Image, UnloadImage>;
+using TextureHandle = AssetHandle<Texture2D, UnloadTexture>;
+using FontHandle = AssetHandle<Font, UnloadFont>;
+using SoundHandle = AssetHandle<Sound, UnloadSound>;
 
 } // namespace
 
@@ -139,10 +196,116 @@ NB_MODULE(_beam, m) {
                ", right=" + std::to_string(p.right) + ")";
       });
 
+  // -- asset resource types ------------------------------------------------
+  //
+  // These wrap AssetHandle (see above); Python only ever gets one via
+  // load_image/load_texture/load_font/load_sound or Manager's asset
+  // getters below, never by constructing one directly.
+
+  nb::class_<ImageHandle>(m, "Image")
+      .def_prop_ro("width", [](const ImageHandle &h) { return h.data.width; })
+      .def_prop_ro("height", [](const ImageHandle &h) { return h.data.height; })
+      .def("__repr__", [](const ImageHandle &h) {
+        return "Image(width=" + std::to_string(h.data.width) +
+               ", height=" + std::to_string(h.data.height) + ")";
+      });
+
+  nb::class_<TextureHandle>(m, "Texture")
+      .def_prop_ro("width", [](const TextureHandle &h) { return h.data.width; })
+      .def_prop_ro("height", [](const TextureHandle &h) { return h.data.height; })
+      .def("__repr__", [](const TextureHandle &h) {
+        return "Texture(width=" + std::to_string(h.data.width) +
+               ", height=" + std::to_string(h.data.height) + ")";
+      });
+
+  nb::class_<FontHandle>(m, "Font")
+      .def_prop_ro("base_size", [](const FontHandle &h) { return h.data.baseSize; })
+      .def_prop_ro("glyph_count", [](const FontHandle &h) { return h.data.glyphCount; })
+      .def("__repr__", [](const FontHandle &h) {
+        return "Font(base_size=" + std::to_string(h.data.baseSize) +
+               ", glyph_count=" + std::to_string(h.data.glyphCount) + ")";
+      });
+
+  nb::class_<SoundHandle>(m, "Sound")
+      .def_prop_ro("frame_count", [](const SoundHandle &h) { return h.data.frameCount; })
+      .def("__repr__", [](const SoundHandle &h) {
+        return "Sound(frame_count=" + std::to_string(h.data.frameCount) + ")";
+      });
+
+  m.def(
+      "load_image", [](const std::string &path) { return ImageHandle(LoadImage(path.c_str())); },
+      nb::arg("path"));
+  m.def(
+      "load_texture",
+      [](const std::string &path) { return TextureHandle(LoadTexture(path.c_str())); },
+      nb::arg("path"));
+  m.def(
+      "load_font", [](const std::string &path) { return FontHandle(LoadFont(path.c_str())); },
+      nb::arg("path"));
+  m.def(
+      "load_sound", [](const std::string &path) { return SoundHandle(LoadSound(path.c_str())); },
+      nb::arg("path"));
+  m.def(
+      "load_texture_from_image",
+      [](const ImageHandle &image) { return TextureHandle(LoadTextureFromImage(image.data)); },
+      nb::arg("image"));
+
   // -- core -------------------------------------------------------------
 
   nb::class_<Manager>(m, "Manager")
       .def("has_asset", &Manager::hasAsset, nb::arg("name"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, ImageHandle &image) {
+            self.setAsset<Image>(name, image.data);
+            image.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, TextureHandle &texture) {
+            self.setAsset<Texture2D>(name, texture.data);
+            texture.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, FontHandle &font) {
+            self.setAsset<Font>(name, font.data);
+            font.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, SoundHandle &sound) {
+            self.setAsset<Sound>(name, sound.data);
+            sound.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "get_image_asset",
+          [](Manager &self, const std::string &name) {
+            return ImageHandle(self.getAsset<Image>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_texture_asset",
+          [](Manager &self, const std::string &name) {
+            return TextureHandle(self.getAsset<Texture2D>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_font_asset",
+          [](Manager &self, const std::string &name) {
+            return FontHandle(self.getAsset<Font>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_sound_asset",
+          [](Manager &self, const std::string &name) {
+            return SoundHandle(self.getAsset<Sound>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
       .def("close", &Manager::close)
       .def("closed", &Manager::closed)
       .def("set_background_color", &Manager::setBackgroundColor, nb::arg("color"))
