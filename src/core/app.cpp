@@ -11,6 +11,7 @@ App::App(const std::string &windowTitle, int windowWidth, int windowHeight,
          int fps, bool fullscreen)
     : title(windowTitle), width(windowWidth), height(windowHeight),
       targetFPS(fps) {
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
   InitWindow(width, height, title.c_str());
   SetTargetFPS(targetFPS);
 
