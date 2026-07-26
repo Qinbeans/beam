@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "beam-engine"
-version = "1.1.5"
+version = "1.1.6"
 description = "Python bindings for the beam game engine"
 requires-python = "==3.13.14"
 
