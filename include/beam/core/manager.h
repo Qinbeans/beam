@@ -95,6 +95,12 @@ public:
   void setBackgroundColor(Color color) { bg = color; }
   Color getBackgroundColor() const { return bg; }
 
+  int getScreenWidth() const { return GetScreenWidth(); }
+  int getScreenHeight() const { return GetScreenHeight(); }
+  int getWindowWidth() const { return GetRenderWidth(); }
+  int getWindowHeight() const { return GetRenderHeight(); }
+  int getFPS() const { return GetFPS(); }
+
   // Input handling methods
   int getKeyPressed() const { return GetKeyPressed(); }
   char getCharPressed() const { return GetCharPressed(); }
