@@ -249,6 +249,14 @@ NB_MODULE(_beam, m) {
       "load_texture_from_image",
       [](const ImageHandle &image) { return TextureHandle(LoadTextureFromImage(image.data)); },
       nb::arg("image"));
+  m.def(
+      "measure_text_ex",
+      [](const std::string &text, float fontSize, float spacing, const FontHandle *font) {
+        return MeasureTextEx(font ? font->data : GetFontDefault(), text.c_str(), fontSize,
+                              spacing);
+      },
+      nb::arg("text"), nb::arg("font_size"), nb::arg("spacing") = 1.0f,
+      nb::arg("font") = nullptr);
 
   // -- core -------------------------------------------------------------
 

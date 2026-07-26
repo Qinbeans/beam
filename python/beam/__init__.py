@@ -32,6 +32,7 @@ from ._beam import (
     log_error,
     log_info,
     log_warning,
+    measure_text_ex,
 )
 
 __all__ = [
@@ -66,4 +67,5 @@ __all__ = [
     "log_error",
     "log_info",
     "log_warning",
+    "measure_text_ex",
 ]
