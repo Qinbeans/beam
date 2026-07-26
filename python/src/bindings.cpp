@@ -534,7 +534,7 @@ NB_MODULE(_beam, m) {
   // -- app --------------------------------------------------------------
 
   nb::class_<App>(m, "App")
-      .def(nb::init<const std::string &, int, int, int, bool>(), nb::arg("title"),
+      .def(nb::init<const std::string &, int, int, int, bool, bool>(), nb::arg("title"),
            nb::arg("width"), nb::arg("height"), nb::arg("fps"), nb::arg("fullscreen") = false,
            nb::arg("resizable") = false)
       // Recover App's own shared_ptr via shared_from_this() rather than
