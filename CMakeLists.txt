@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Beam VERSION 1.0.0 LANGUAGES CXX)
+project(Beam VERSION 1.0.1 LANGUAGES CXX)
 
 # Specify C++20 standard
 set(CMAKE_CXX_STANDARD 20)
