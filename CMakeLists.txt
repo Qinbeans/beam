@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(Beam VERSION 1.0.1 LANGUAGES CXX)
+project(Beam VERSION 1.0.2 LANGUAGES CXX)
 
 # beam itself only needs C++17 (nothing in src/ or include/beam/ uses a C++20
 # language feature). Stay on C++17 for the main library/executables: under
