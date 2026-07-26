@@ -1,8 +1,16 @@
 cmake_minimum_required(VERSION 3.15)
 project(Beam VERSION 1.0.1 LANGUAGES CXX)
 
-# Specify C++20 standard
-set(CMAKE_CXX_STANDARD 20)
+# beam itself only needs C++17 (nothing in src/ or include/beam/ uses a C++20
+# language feature). Stay on C++17 for the main library/executables: under
+# strict -std=c++20, GCC treats websocketpp 0.8.2's pre-C++20 constructor-name
+# idiom (e.g. `basic<concurrency,names>(...)`) as an ill-formed parse error,
+# not just a warning, so marking its headers SYSTEM doesn't help. The Python
+# bindings module (_beam) does need C++20, for parenthesized aggregate init of
+# Vector2/Color/Rectangle in nanobind's nb::init<>() calls; it declares that
+# requirement on itself via target_compile_features(cxx_std_20), independent
+# of this project-wide default.
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -131,7 +139,7 @@ add_library(beam
 
 # Set C++ standard for beam library
 set_target_properties(beam PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
     POSITION_INDEPENDENT_CODE ON
