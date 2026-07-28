@@ -6,7 +6,7 @@ extension binary. These stubs mirror the bindings by hand and must be kept
 in sync with python/src/bindings.cpp.
 """
 
-from collections.abc import Callable
+from collections.abc import Buffer, Callable
 from typing import overload
 
 # -- raylib value types -----------------------------------------------------
@@ -234,6 +234,37 @@ def gen_mesh_plane(
 ) -> Mesh:
     """Generate a subdivided flat plane mesh."""
     ...
+def upload_mesh(
+    vertices: Buffer,
+    indices: Buffer | None = None,
+    normals: Buffer | None = None,
+    texcoords: Buffer | None = None,
+    colors: Buffer | None = None,
+    dynamic: bool = False,
+) -> Mesh:
+    """Upload geometry you generated yourself to the GPU and return it as a
+    `Mesh`, ready to hand to `Mesh3D`. This is the counterpart to the
+    `gen_mesh_*` primitives, for shapes that have no primitive form - a voxel
+    chunk mesher being the usual case.
+
+    Every array is a 1-D, C-contiguous CPU buffer rather than a list: numpy
+    arrays, `array.array`, `memoryview` and `bytes` all work, and the data is
+    copied straight out without a per-element Python conversion.
+
+    `vertices` holds 3 floats per vertex, `normals` 3, `texcoords` 2, and
+    `colors` 4 bytes (RGBA); each optional attribute must cover every vertex.
+    `indices` holds 3 unsigned shorts per triangle, which caps an indexed mesh
+    at 65536 vertices - split larger geometry across several meshes. Without
+    `indices`, vertices are drawn as consecutive triples.
+
+    Pass `dynamic=True` if the buffers will be rewritten later. Requires an
+    initialized window, since the upload needs a GL context.
+
+    Raises:
+        ValueError: if an array's length disagrees with the vertex count, or an
+            index points past the last vertex.
+    """
+    ...
 def load_texture_from_image(image: Image) -> Texture:
     """Upload `image` to the GPU and return the resulting texture."""
     ...
@@ -395,7 +426,13 @@ class Node:
         """Set whether this node and its subtree are active (updated and drawn)."""
         ...
     def set_parent(self, parent: Node) -> None:
-        """Reparent this node under `parent`."""
+        """Reparent this node under `parent`.
+
+        The parent is held weakly, so something else must already own it - add
+        it to its `Scene`, `Frame` or `Camera3D` first. Passing a node nothing
+        else holds raises `RuntimeError` rather than silently leaving this node
+        unparented.
+        """
         ...
     def get_position(self) -> Vector2:
         """Return the position."""
@@ -2549,11 +2586,27 @@ class Object3D(GameObject):
     def set_scale(self, scale: Vector3) -> None:
         """Set the scale."""
         ...
+    def set_pivot(self, pivot: Vector3) -> None:
+        """Set the local-space point that rotation and scale happen around, and
+        that `set_position` places. Defaults to the origin.
+
+        This is what makes jointed animation work without a skeleton: give a
+        limb a pivot at its joint, parent it to the torso, and `set_euler`
+        swings it about that joint the way a bone would.
+        """
+        ...
+    def set_euler(self, pitch: float, yaw: float, roll: float) -> None:
+        """Set the rotation as Euler angles in degrees - `pitch` around X, `yaw`
+        around Y, `roll` around Z. Stored as the equivalent axis/angle, so
+        `get_rotation_axis` and `get_rotation_angle` stay meaningful.
+        """
+        ...
     def set_tint(self, tint: Color) -> None:
         """Set the tint."""
         ...
     def get_position(self) -> Vector3:
-        """Return the position."""
+        """Return the position, relative to the parent `Object3D` if there is
+        one (see `get_world_matrix`)."""
         ...
     def get_rotation_axis(self) -> Vector3:
         """Return the rotation axis."""
@@ -2564,11 +2617,38 @@ class Object3D(GameObject):
     def get_scale(self) -> Vector3:
         """Return the scale."""
         ...
+    def get_pivot(self) -> Vector3:
+        """Return the local-space point rotation and scale happen around."""
+        ...
+    def get_euler(self) -> Vector3:
+        """Return the rotation as Euler angles in degrees (see `set_euler`)."""
+        ...
     def get_tint(self) -> Color:
         """Return the tint."""
         ...
+    def get_local_matrix(self) -> Matrix:
+        """Return this object's own transform - pivot, then scale, then
+        rotation, then position - without any parent's contribution."""
+        ...
+    def get_world_matrix(self) -> Matrix:
+        """Return `get_local_matrix` composed with the local matrix of every
+        `Object3D` above this one in the node tree. This is the matrix the
+        object actually draws with.
+
+        Parenting composes transforms but does not draw: `Node` keeps a parent
+        pointer and no child list, so only container nodes (`Camera3D`,
+        `Scene`, ...) render their children. Build a limb hierarchy by adding
+        every part to the `Camera3D` and calling `set_parent` to say how the
+        parts move together.
+        """
+        ...
+    def get_world_position(self) -> Vector3:
+        """Return the translation of `get_world_matrix` - where this object
+        ends up once its parents are taken into account."""
+        ...
     def get_bounding_box(self) -> BoundingBox:
-        """Return the object's axis-aligned bounding box."""
+        """Return the axis-aligned world-space box enclosing this object under
+        `get_world_matrix`, so it accounts for rotation and any parent."""
         ...
     def check_ray_collision(self, ray: Ray) -> RayCollision:
         """Test `ray` against this object and return the collision result."""
@@ -2725,6 +2805,20 @@ class Model3D(Object3D):
     def on_draw(self, callback: Callable[[Model3D, Manager], None]) -> None:
         """Register a callback invoked after the object's default drawing."""
         ...
+
+# raylib's CameraProjection values, for Camera3D's `projection` argument.
+# Orthographic is the usual choice for an isometric-looking scene.
+CAMERA_PERSPECTIVE: int
+CAMERA_ORTHOGRAPHIC: int
+
+# raylib's CameraMode values, for Camera3D's `mode` argument. CAMERA_CUSTOM
+# leaves the camera entirely under the game's control; the others let raylib
+# drive it from input each frame.
+CAMERA_CUSTOM: int
+CAMERA_FREE: int
+CAMERA_ORBITAL: int
+CAMERA_FIRST_PERSON: int
+CAMERA_THIRD_PERSON: int
 
 class Camera3D(GameObject):
     """A `GameObject` that defines the 3D viewpoint used to render its children."""

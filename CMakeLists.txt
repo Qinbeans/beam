@@ -314,9 +314,20 @@ install(DIRECTORY include/beam
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     FILES_MATCHING PATTERN "*.h"
 )
-install(FILES include/raylib.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+# raylib's own header, taken from whichever raylib actually got built. beam
+# used to vendor a copy of raylib.h here, which silently rotted: the copy was
+# 5.5 while RAYLIB_VERSION above fetched 6.0, and since include/ precedes the
+# fetched sources on the include path, every translation unit compiled against
+# 5.5's struct layouts and then linked 6.0's binary. Mesh, Model and
+# ModelAnimation all changed shape between those releases, so 3D code built
+# fine and read the wrong offsets at runtime. Never re-add a copy here.
+if (raylib_FOUND)
+    # System raylib: its own headers are already installed, nothing to do.
+else()
+    install(FILES ${raylib_SOURCE_DIR}/src/raylib.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    )
+endif()
 install(FILES ${raygui_SOURCE_DIR}/src/raygui.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )

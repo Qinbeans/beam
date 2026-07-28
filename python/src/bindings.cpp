@@ -8,11 +8,19 @@
 // Manager's asset registry stores - see the AssetHandle note below.
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 #include <nanobind/stl/function.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/trampoline.h>
+
+#include <cstring>
+#include <limits>
+#include <optional>
+#include <stdexcept>
+#include <string>
 
 #include "beam/core/app.h"
 #include "beam/core/event.h"
@@ -161,6 +169,47 @@ using MusicHandle = AssetHandle<Music, UnloadMusicStream>;
 using MeshHandle = AssetHandle<Mesh, UnloadMesh>;
 using MaterialHandle = AssetHandle<Material, UnloadMaterial>;
 using ModelHandle = AssetHandle<Model, UnloadModel>;
+
+// Vertex data for upload_mesh() arrives as any 1-D, C-contiguous CPU buffer:
+// numpy arrays, array.array, memoryview, bytes, ... Accepting the buffer
+// protocol rather than a Python list keeps beam free of an array-library
+// dependency while still making a 100k-vertex terrain chunk cheap to hand
+// over - a list would cost one Python->C++ conversion per component.
+template <typename T>
+using VertexArray = nb::ndarray<const T, nb::ndim<1>, nb::c_contig, nb::device::cpu>;
+
+using FloatArray = VertexArray<float>;
+using IndexArray = VertexArray<unsigned short>;
+using ByteArray = VertexArray<unsigned char>;
+
+// Copy an attribute into a buffer raylib can own. UnloadMesh releases these
+// with RL_FREE, so they have to come from raylib's matching allocator and not
+// from new[] or std::malloc.
+template <typename Element, typename Array>
+Element *cloneAttribute(const Array &source) {
+  const size_t bytes = source.size() * sizeof(Element);
+  auto *destination = static_cast<Element *>(MemAlloc(static_cast<unsigned int>(bytes)));
+  std::memcpy(destination, source.data(), bytes);
+  return destination;
+}
+
+// Attribute arrays are per-vertex, so a wrong length is a silent
+// out-of-bounds read on the GPU rather than an error. Check up front.
+template <typename Array>
+void requireComponentCount(const std::optional<Array> &attribute, const char *name,
+                           size_t vertexCount, size_t componentsPerVertex) {
+  if (!attribute)
+    return;
+
+  const size_t expected = vertexCount * componentsPerVertex;
+  if (attribute->size() != expected) {
+    throw std::invalid_argument(
+        std::string(name) + " must hold " + std::to_string(componentsPerVertex) +
+        " components for each of the " + std::to_string(vertexCount) +
+        " vertices (expected " + std::to_string(expected) + " values, got " +
+        std::to_string(attribute->size()) + ")");
+  }
+}
 
 } // namespace
 
@@ -347,7 +396,9 @@ NB_MODULE(_beam, m) {
   nb::class_<ModelHandle>(m, "Model")
       .def_prop_ro("mesh_count", [](const ModelHandle &h) { return h.data.meshCount; })
       .def_prop_ro("material_count", [](const ModelHandle &h) { return h.data.materialCount; })
-      .def_prop_ro("bone_count", [](const ModelHandle &h) { return h.data.boneCount; })
+      // raylib 6.0 moved the skeleton off Model and into Model::skeleton.
+      .def_prop_ro("bone_count",
+                   [](const ModelHandle &h) { return h.data.skeleton.boneCount; })
       .def("__repr__", [](const ModelHandle &h) {
         return "Model(mesh_count=" + std::to_string(h.data.meshCount) +
                ", material_count=" + std::to_string(h.data.materialCount) + ")";
@@ -411,6 +462,85 @@ NB_MODULE(_beam, m) {
         return MeshHandle(GenMeshPlane(width, length, resX, resZ));
       },
       nb::arg("width"), nb::arg("length"), nb::arg("res_x") = 1, nb::arg("res_z") = 1);
+  m.def(
+      "upload_mesh",
+      [](FloatArray vertices, std::optional<IndexArray> indices,
+         std::optional<FloatArray> normals, std::optional<FloatArray> texcoords,
+         std::optional<ByteArray> colors, bool dynamic) {
+        if (vertices.size() == 0 || vertices.size() % 3 != 0) {
+          throw std::invalid_argument(
+              "vertices must hold 3 components (x, y, z) per vertex, so its "
+              "length must be a non-zero multiple of 3; got " +
+              std::to_string(vertices.size()));
+        }
+
+        const size_t vertexCount = vertices.size() / 3;
+        if (vertexCount > static_cast<size_t>(std::numeric_limits<int>::max())) {
+          throw std::invalid_argument("vertices holds more vertices than a mesh can index");
+        }
+
+        requireComponentCount(normals, "normals", vertexCount, 3);
+        requireComponentCount(texcoords, "texcoords", vertexCount, 2);
+        requireComponentCount(colors, "colors", vertexCount, 4);
+
+        size_t triangleCount = vertexCount / 3;
+        if (indices) {
+          if (indices->size() == 0 || indices->size() % 3 != 0) {
+            throw std::invalid_argument(
+                "indices must hold 3 vertex indices per triangle, so its length "
+                "must be a non-zero multiple of 3; got " +
+                std::to_string(indices->size()));
+          }
+
+          // raylib's Mesh stores indices as unsigned short, so an indexed mesh
+          // tops out at 65536 vertices. Voxel chunk meshers routinely exceed
+          // that, so say it plainly instead of letting the index wrap.
+          if (vertexCount > 65536) {
+            throw std::invalid_argument(
+                "an indexed mesh cannot address more than 65536 vertices "
+                "(raylib stores indices as unsigned short); got " +
+                std::to_string(vertexCount) +
+                " - split the geometry into several meshes");
+          }
+
+          const unsigned short *values = indices->data();
+          for (size_t i = 0; i < indices->size(); i++) {
+            if (static_cast<size_t>(values[i]) >= vertexCount) {
+              throw std::invalid_argument(
+                  "indices[" + std::to_string(i) + "] is " +
+                  std::to_string(values[i]) + ", which is past the last of the " +
+                  std::to_string(vertexCount) + " vertices");
+            }
+          }
+
+          triangleCount = indices->size() / 3;
+        } else if (vertexCount % 3 != 0) {
+          throw std::invalid_argument(
+              "an unindexed mesh draws consecutive triples of vertices as "
+              "triangles, so its vertex count must be a multiple of 3; got " +
+              std::to_string(vertexCount));
+        }
+
+        // Value-initialised so every attribute raylib might free starts null.
+        Mesh mesh{};
+        mesh.vertexCount = static_cast<int>(vertexCount);
+        mesh.triangleCount = static_cast<int>(triangleCount);
+        mesh.vertices = cloneAttribute<float>(vertices);
+        if (indices)
+          mesh.indices = cloneAttribute<unsigned short>(*indices);
+        if (normals)
+          mesh.normals = cloneAttribute<float>(*normals);
+        if (texcoords)
+          mesh.texcoords = cloneAttribute<float>(*texcoords);
+        if (colors)
+          mesh.colors = cloneAttribute<unsigned char>(*colors);
+
+        UploadMesh(&mesh, dynamic);
+        return MeshHandle(mesh);
+      },
+      nb::arg("vertices"), nb::arg("indices") = nb::none(),
+      nb::arg("normals") = nb::none(), nb::arg("texcoords") = nb::none(),
+      nb::arg("colors") = nb::none(), nb::arg("dynamic") = false);
   m.def(
       "load_texture_from_image",
       [](const ImageHandle &image) { return TextureHandle(LoadTextureFromImage(image.data)); },
@@ -563,7 +693,27 @@ NB_MODULE(_beam, m) {
       .def("draw", &Node::draw, nb::arg("manager"))
       .def("set_position", &Node::setPosition, nb::arg("x"), nb::arg("y"))
       .def("set_active", &Node::setActive, nb::arg("active"))
-      .def("set_parent", &Node::setParent, nb::arg("parent"))
+      // Node holds its parent weakly, so the link survives only as long as
+      // something else owns the parent. When a Python object is passed here
+      // and nothing else holds it, nanobind synthesises a shared_ptr purely
+      // for this call, and the weak_ptr is dead the moment the call returns -
+      // leaving get_parent() at None and Object3D transforms silently
+      // un-parented. Refuse that up front rather than let it look like it
+      // worked: use_count() is 1 exactly when this call owns the only
+      // reference.
+      .def(
+          "set_parent",
+          [](std::shared_ptr<Node> self, std::shared_ptr<Node> parent) {
+            if (parent.use_count() <= 1) {
+              throw std::runtime_error(
+                  "set_parent() cannot keep a reference to '" + parent->getName() +
+                  "', because nothing else owns it and Node stores its parent "
+                  "weakly. Add the parent to its Scene, Frame or Camera3D "
+                  "first, then call set_parent().");
+            }
+            self->setParent(parent);
+          },
+          nb::arg("parent"))
       .def("get_position", &Node::getPosition)
       .def("is_active", &Node::isActive)
       .def("get_name", &Node::getName)
@@ -1453,12 +1603,20 @@ NB_MODULE(_beam, m) {
       .def("set_rotation_axis", &Object3D::setRotationAxis, nb::arg("rotation_axis"))
       .def("set_rotation_angle", &Object3D::setRotationAngle, nb::arg("rotation_angle"))
       .def("set_scale", &Object3D::setScale, nb::arg("scale"))
+      .def("set_pivot", &Object3D::setPivot, nb::arg("pivot"))
+      .def("set_euler", &Object3D::setEuler, nb::arg("pitch"), nb::arg("yaw"),
+           nb::arg("roll"))
       .def("set_tint", &Object3D::setTint, nb::arg("tint"))
       .def("get_position", &Object3D::getPosition)
       .def("get_rotation_axis", &Object3D::getRotationAxis)
       .def("get_rotation_angle", &Object3D::getRotationAngle)
       .def("get_scale", &Object3D::getScale)
+      .def("get_pivot", &Object3D::getPivot)
+      .def("get_euler", &Object3D::getEuler)
       .def("get_tint", &Object3D::getTint)
+      .def("get_local_matrix", &Object3D::getLocalMatrix)
+      .def("get_world_matrix", &Object3D::getWorldMatrix)
+      .def("get_world_position", &Object3D::getWorldPosition)
       .def("get_bounding_box", &Object3D::getBoundingBox)
       .def("check_ray_collision", &Object3D::checkRayCollision, nb::arg("ray"))
       .def("collides_with", &Object3D::collidesWith, nb::arg("other"));
@@ -1478,12 +1636,27 @@ NB_MODULE(_beam, m) {
       .def("on_draw", &Cube3D::onDraw, nb::arg("callback"));
 
   nb::class_<Mesh3D, Object3D>(m, "Mesh3D")
-      .def(nb::init<SharedManager, const std::string &, const std::string &, Mesh, Vector3,
-                     Vector3, float, Vector3, Color, bool>(),
-           nb::arg("manager"), nb::arg("name"), nb::arg("cache_key"), nb::arg("mesh"),
-           nb::arg("position"), nb::arg("rotation_axis") = Vector3{0.0f, 1.0f, 0.0f},
-           nb::arg("rotation_angle") = 0.0f, nb::arg("scale") = Vector3{1.0f, 1.0f, 1.0f},
-           nb::arg("tint") = Color{255, 255, 255, 255}, nb::arg("wireframe") = false)
+      // Mesh3D's C++ constructor takes a raylib ::Mesh by value, but the type
+      // exposed to Python as "Mesh" is MeshHandle - nanobind cannot bridge the
+      // two, so nb::init<..., Mesh, ...> compiled fine and then rejected every
+      // possible argument, leaving Mesh3D uncallable. Unwrap the handle here.
+      .def(
+          "__init__",
+          [](Mesh3D *self, SharedManager manager, const std::string &name,
+             const std::string &cacheKey, MeshHandle &mesh, Vector3 position,
+             Vector3 rotationAxis, float rotationAngle, Vector3 scale, Color tint,
+             bool wireframe) {
+            new (self) Mesh3D(manager, name, cacheKey, mesh.data, position,
+                              rotationAxis, rotationAngle, scale, tint, wireframe);
+            // Mesh3D either hands the mesh to the Manager's asset registry or
+            // unloads it when the cache key is already taken; either way it
+            // owns the GPU buffers now and the handle must not free them.
+            mesh.disown();
+          },
+          nb::arg("manager"), nb::arg("name"), nb::arg("cache_key"), nb::arg("mesh"),
+          nb::arg("position"), nb::arg("rotation_axis") = Vector3{0.0f, 1.0f, 0.0f},
+          nb::arg("rotation_angle") = 0.0f, nb::arg("scale") = Vector3{1.0f, 1.0f, 1.0f},
+          nb::arg("tint") = Color{255, 255, 255, 255}, nb::arg("wireframe") = false)
       .def("set_wireframe", &Mesh3D::setWireframe, nb::arg("wireframe"))
       .def("is_wireframe", &Mesh3D::isWireframe)
       .def("on_update", &Mesh3D::onUpdate, nb::arg("callback"))
@@ -1515,6 +1688,18 @@ NB_MODULE(_beam, m) {
       .def("get_bone_parent", &Model3D::getBoneParent, nb::arg("index"))
       .def("on_update", &Model3D::onUpdate, nb::arg("callback"))
       .def("on_draw", &Model3D::onDraw, nb::arg("callback"));
+
+  // Camera3D's `projection` and `mode` are plain ints carrying raylib's
+  // CameraProjection/CameraMode enums. Export the values so callers don't have
+  // to hardcode the magic numbers - an orthographic projection with a camera
+  // the game drives itself is the usual setup for an isometric-looking scene.
+  m.attr("CAMERA_PERSPECTIVE") = static_cast<int>(CAMERA_PERSPECTIVE);
+  m.attr("CAMERA_ORTHOGRAPHIC") = static_cast<int>(CAMERA_ORTHOGRAPHIC);
+  m.attr("CAMERA_CUSTOM") = static_cast<int>(CAMERA_CUSTOM);
+  m.attr("CAMERA_FREE") = static_cast<int>(CAMERA_FREE);
+  m.attr("CAMERA_ORBITAL") = static_cast<int>(CAMERA_ORBITAL);
+  m.attr("CAMERA_FIRST_PERSON") = static_cast<int>(CAMERA_FIRST_PERSON);
+  m.attr("CAMERA_THIRD_PERSON") = static_cast<int>(CAMERA_THIRD_PERSON);
 
   nb::class_<beam::Camera3D, GameObject>(m, "Camera3D")
       .def(nb::init<const std::string &, Vector3, Vector3, Vector3, float, int, int>(),

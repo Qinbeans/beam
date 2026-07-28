@@ -1,5 +1,20 @@
 #include "beam/objects/cube3d.h"
 
+// raymath.h's helper functions use brace-initializers (e.g. `Matrix result =
+// { 0 };`) that trip -Wmissing-field-initializers under beam's warning
+// flags; that's a raymath.h authoring style, not a beam issue, so silence it
+// locally around this vendored header only.
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
+#include "raymath.h"
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+
+#include "rlgl.h"
+
 namespace beam {
 
 Cube3D::Cube3D(const std::string &name, Vector3 position, Vector3 size,
@@ -10,10 +25,22 @@ Cube3D::Cube3D(const std::string &name, Vector3 position, Vector3 size,
 
 void Cube3D::draw(SharedManager manager) {
   GameObject::draw(manager);
-  DrawCubeV(position, size, tint);
+
+  // DrawCubeV/DrawCubeWiresV take a position but no matrix, so they can't
+  // express rotation, scale or a parent's transform on their own. Pushing the
+  // world matrix onto rlgl's stack and drawing at the origin under it gets all
+  // of that while keeping DrawCubeWiresV's clean twelve-edge outline, which a
+  // triangle-mesh wireframe would clutter with face diagonals.
+  rlPushMatrix();
+  rlMultMatrixf(MatrixToFloat(getWorldMatrix()));
+
+  DrawCubeV(Vector3{0.0f, 0.0f, 0.0f}, size, tint);
   if (wireframe) {
-    DrawCubeWiresV(position, size, wireColor);
+    DrawCubeWiresV(Vector3{0.0f, 0.0f, 0.0f}, size, wireColor);
   }
+
+  rlPopMatrix();
+
   if (drawCallback) {
     drawCallback(this, manager);
   }
@@ -40,9 +67,9 @@ Color Cube3D::getWireColor() const { return wireColor; }
 
 BoundingBox Cube3D::getBoundingBox() const {
   Vector3 half = {size.x / 2.0f, size.y / 2.0f, size.z / 2.0f};
-  return BoundingBox{
-      Vector3{position.x - half.x, position.y - half.y, position.z - half.z},
-      Vector3{position.x + half.x, position.y + half.y, position.z + half.z}};
+  return transformBoundingBox(
+      BoundingBox{Vector3{-half.x, -half.y, -half.z},
+                  Vector3{half.x, half.y, half.z}});
 }
 
 void Cube3D::onUpdate(
