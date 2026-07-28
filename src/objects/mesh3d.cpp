@@ -45,11 +45,7 @@ void Mesh3D::draw(SharedManager manager) {
 
   material.maps[MATERIAL_MAP_DIFFUSE].color = getTint();
 
-  Matrix transform = MatrixMultiply(
-      MatrixMultiply(MatrixScale(getScale().x, getScale().y, getScale().z),
-                      MatrixRotate(getRotationAxis(),
-                                   getRotationAngle() * DEG2RAD)),
-      MatrixTranslate(getPosition().x, getPosition().y, getPosition().z));
+  Matrix transform = getWorldMatrix();
 
   if (wireframe) {
     rlEnableWireMode();
@@ -76,15 +72,7 @@ void Mesh3D::setWireframe(bool wireframe) { this->wireframe = wireframe; }
 bool Mesh3D::isWireframe() const { return wireframe; }
 
 BoundingBox Mesh3D::getBoundingBox() const {
-  BoundingBox box = GetMeshBoundingBox(mesh);
-  Vector3 position = getPosition();
-  box.min.x += position.x;
-  box.min.y += position.y;
-  box.min.z += position.z;
-  box.max.x += position.x;
-  box.max.y += position.y;
-  box.max.z += position.z;
-  return box;
+  return transformBoundingBox(GetMeshBoundingBox(mesh));
 }
 
 void Mesh3D::onUpdate(

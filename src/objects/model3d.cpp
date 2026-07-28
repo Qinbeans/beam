@@ -37,12 +37,18 @@ Model3D::Model3D(SharedManager manager, const std::string &name,
 void Model3D::draw(SharedManager manager) {
   GameObject::draw(manager);
 
+  // DrawModelEx can only express an axis/angle transform, which cannot carry a
+  // pivot or a parent's transform. Fold the full world matrix into a local copy
+  // of the model instead and draw with an identity offset: DrawModel/
+  // DrawModelWires pre-multiply model.transform by the matrix built from their
+  // position/scale arguments, so zero and one leave it exactly as set here.
+  Model transformed = model;
+  transformed.transform = MatrixMultiply(model.transform, getWorldMatrix());
+
   if (wireframe) {
-    DrawModelWiresEx(model, getPosition(), getRotationAxis(),
-                      getRotationAngle(), getScale(), getTint());
+    DrawModelWires(transformed, Vector3{0.0f, 0.0f, 0.0f}, 1.0f, getTint());
   } else {
-    DrawModelEx(model, getPosition(), getRotationAxis(), getRotationAngle(),
-                getScale(), getTint());
+    DrawModel(transformed, Vector3{0.0f, 0.0f, 0.0f}, 1.0f, getTint());
   }
 
   if (drawCallback) {
@@ -56,23 +62,23 @@ void Model3D::update(float delta, SharedManager manager) {
   if (playing && animations != nullptr && fromIndex >= 0) {
     const ModelAnimation &animA = animations[fromIndex];
     frameA += delta * fps * speed;
-    if (animA.frameCount > 0) {
+    if (animA.keyframeCount > 0) {
       if (loop) {
-        frameA = std::fmod(frameA, static_cast<float>(animA.frameCount));
+        frameA = std::fmod(frameA, static_cast<float>(animA.keyframeCount));
         if (frameA < 0.0f)
-          frameA += static_cast<float>(animA.frameCount);
+          frameA += static_cast<float>(animA.keyframeCount);
       } else {
-        frameA = std::min(frameA, static_cast<float>(animA.frameCount - 1));
+        frameA = std::min(frameA, static_cast<float>(animA.keyframeCount - 1));
       }
     }
 
     if (crossfading && toIndex >= 0) {
       const ModelAnimation &animB = animations[toIndex];
       frameB += delta * fps * speed;
-      if (animB.frameCount > 0) {
-        frameB = std::fmod(frameB, static_cast<float>(animB.frameCount));
+      if (animB.keyframeCount > 0) {
+        frameB = std::fmod(frameB, static_cast<float>(animB.keyframeCount));
         if (frameB < 0.0f)
-          frameB += static_cast<float>(animB.frameCount);
+          frameB += static_cast<float>(animB.keyframeCount);
       }
 
       blendElapsed += delta;
@@ -104,29 +110,14 @@ void Model3D::setWireframe(bool wireframe) { this->wireframe = wireframe; }
 bool Model3D::isWireframe() const { return wireframe; }
 
 BoundingBox Model3D::getBoundingBox() const {
-  BoundingBox box = GetModelBoundingBox(model);
-  Vector3 position = getPosition();
-  box.min.x += position.x;
-  box.min.y += position.y;
-  box.min.z += position.z;
-  box.max.x += position.x;
-  box.max.y += position.y;
-  box.max.z += position.z;
-  return box;
+  return transformBoundingBox(GetModelBoundingBox(model));
 }
 
 RayCollision Model3D::checkRayCollision(Ray ray) const {
   RayCollision closest{false, std::numeric_limits<float>::max(),
                        Vector3{0.0f, 0.0f, 0.0f}, Vector3{0.0f, 0.0f, 0.0f}};
 
-  Matrix transform = MatrixMultiply(
-      model.transform,
-      MatrixMultiply(
-          MatrixMultiply(MatrixScale(getScale().x, getScale().y, getScale().z),
-                          MatrixRotate(getRotationAxis(),
-                                       getRotationAngle() * DEG2RAD)),
-          MatrixTranslate(getPosition().x, getPosition().y,
-                           getPosition().z)));
+  Matrix transform = MatrixMultiply(model.transform, getWorldMatrix());
 
   for (int i = 0; i < model.meshCount; i++) {
     RayCollision collision =
@@ -238,18 +229,22 @@ float Model3D::getBlendFactor() const { return blend; }
 
 void Model3D::setAnimationFPS(float fps) { this->fps = fps; }
 
-int Model3D::getBoneCount() const { return model.boneCount; }
+// raylib 6.0 moved the skeleton off Model itself and into Model::skeleton
+// (see ModelSkeleton in raylib.h); 5.5 had model.boneCount/model.bones.
+int Model3D::getBoneCount() const { return model.skeleton.boneCount; }
 
 std::string Model3D::getBoneName(int index) const {
-  if (index < 0 || index >= model.boneCount)
+  if (index < 0 || index >= model.skeleton.boneCount ||
+      model.skeleton.bones == nullptr)
     return "";
-  return model.bones[index].name;
+  return model.skeleton.bones[index].name;
 }
 
 int Model3D::getBoneParent(int index) const {
-  if (index < 0 || index >= model.boneCount)
+  if (index < 0 || index >= model.skeleton.boneCount ||
+      model.skeleton.bones == nullptr)
     return -1;
-  return model.bones[index].parent;
+  return model.skeleton.bones[index].parent;
 }
 
 } // namespace beam
