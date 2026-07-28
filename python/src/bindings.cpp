@@ -20,13 +20,17 @@
 #include "beam/core/manager.h"
 #include "beam/core/node.h"
 #include "beam/core/websocket_client.h"
+#include "beam/objects/audio_source.h"
 #include "beam/objects/button.h"
+#include "beam/objects/camera2d.h"
+#include "beam/objects/camera3d.h"
 #include "beam/objects/checkbox.h"
 #include "beam/objects/color_bar_alpha.h"
 #include "beam/objects/color_bar_hue.h"
 #include "beam/objects/color_panel.h"
 #include "beam/objects/color_picker.h"
 #include "beam/objects/combo_box.h"
+#include "beam/objects/cube3d.h"
 #include "beam/objects/dropdown_box.h"
 #include "beam/objects/dummy_rec.h"
 #include "beam/objects/frame.h"
@@ -37,7 +41,11 @@
 #include "beam/objects/label_button.h"
 #include "beam/objects/line.h"
 #include "beam/objects/list_view.h"
+#include "beam/objects/mesh3d.h"
 #include "beam/objects/message_box.h"
+#include "beam/objects/model3d.h"
+#include "beam/objects/music_player.h"
+#include "beam/objects/object3d.h"
 #include "beam/objects/progress_bar.h"
 #include "beam/objects/scroll_panel.h"
 #include "beam/objects/slider.h"
@@ -149,6 +157,10 @@ using ImageHandle = AssetHandle<Image, UnloadImage>;
 using TextureHandle = AssetHandle<Texture2D, UnloadTexture>;
 using FontHandle = AssetHandle<Font, UnloadFont>;
 using SoundHandle = AssetHandle<Sound, UnloadSound>;
+using MusicHandle = AssetHandle<Music, UnloadMusicStream>;
+using MeshHandle = AssetHandle<Mesh, UnloadMesh>;
+using MaterialHandle = AssetHandle<Material, UnloadMaterial>;
+using ModelHandle = AssetHandle<Model, UnloadModel>;
 
 } // namespace
 
@@ -225,6 +237,59 @@ NB_MODULE(_beam, m) {
                ", right=" + std::to_string(p.right) + ")";
       });
 
+  // -- 3D value types (Vector3, BoundingBox, Ray, RayCollision) ------------
+
+  nb::class_<Vector3>(m, "Vector3")
+      .def(
+          "__init__",
+          [](Vector3 *self, float x, float y, float z) {
+            new (self) Vector3{x, y, z};
+          },
+          nb::arg("x") = 0.0f, nb::arg("y") = 0.0f, nb::arg("z") = 0.0f)
+      .def_rw("x", &Vector3::x)
+      .def_rw("y", &Vector3::y)
+      .def_rw("z", &Vector3::z)
+      .def("__repr__", [](const Vector3 &v) {
+        return "Vector3(x=" + std::to_string(v.x) + ", y=" + std::to_string(v.y) +
+               ", z=" + std::to_string(v.z) + ")";
+      });
+
+  nb::class_<BoundingBox>(m, "BoundingBox")
+      .def(
+          "__init__",
+          [](BoundingBox *self, Vector3 min, Vector3 max) {
+            new (self) BoundingBox{min, max};
+          },
+          nb::arg("min"), nb::arg("max"))
+      .def_rw("min", &BoundingBox::min)
+      .def_rw("max", &BoundingBox::max)
+      .def("__repr__", [](const BoundingBox &b) {
+        return "BoundingBox(min=Vector3(" + std::to_string(b.min.x) + ", " +
+               std::to_string(b.min.y) + ", " + std::to_string(b.min.z) +
+               "), max=Vector3(" + std::to_string(b.max.x) + ", " +
+               std::to_string(b.max.y) + ", " + std::to_string(b.max.z) + "))";
+      });
+
+  nb::class_<Ray>(m, "Ray")
+      .def(
+          "__init__",
+          [](Ray *self, Vector3 position, Vector3 direction) {
+            new (self) Ray{position, direction};
+          },
+          nb::arg("position"), nb::arg("direction"))
+      .def_rw("position", &Ray::position)
+      .def_rw("direction", &Ray::direction);
+
+  nb::class_<RayCollision>(m, "RayCollision")
+      .def_rw("hit", &RayCollision::hit)
+      .def_rw("distance", &RayCollision::distance)
+      .def_rw("point", &RayCollision::point)
+      .def_rw("normal", &RayCollision::normal)
+      .def("__repr__", [](const RayCollision &r) {
+        return "RayCollision(hit=" + std::string(r.hit ? "True" : "False") +
+               ", distance=" + std::to_string(r.distance) + ")";
+      });
+
   // -- asset resource types ------------------------------------------------
   //
   // These wrap AssetHandle (see above); Python only ever gets one via
@@ -261,6 +326,33 @@ NB_MODULE(_beam, m) {
         return "Sound(frame_count=" + std::to_string(h.data.frameCount) + ")";
       });
 
+  nb::class_<MusicHandle>(m, "Music")
+      .def_prop_ro("frame_count", [](const MusicHandle &h) { return h.data.frameCount; })
+      .def_prop_ro("looping", [](const MusicHandle &h) { return h.data.looping; })
+      .def("__repr__", [](const MusicHandle &h) {
+        return "Music(frame_count=" + std::to_string(h.data.frameCount) + ")";
+      });
+
+  nb::class_<MeshHandle>(m, "Mesh")
+      .def_prop_ro("vertex_count", [](const MeshHandle &h) { return h.data.vertexCount; })
+      .def_prop_ro("triangle_count", [](const MeshHandle &h) { return h.data.triangleCount; })
+      .def("__repr__", [](const MeshHandle &h) {
+        return "Mesh(vertex_count=" + std::to_string(h.data.vertexCount) +
+               ", triangle_count=" + std::to_string(h.data.triangleCount) + ")";
+      });
+
+  nb::class_<MaterialHandle>(m, "Material")
+      .def("__repr__", [](const MaterialHandle &) { return "Material()"; });
+
+  nb::class_<ModelHandle>(m, "Model")
+      .def_prop_ro("mesh_count", [](const ModelHandle &h) { return h.data.meshCount; })
+      .def_prop_ro("material_count", [](const ModelHandle &h) { return h.data.materialCount; })
+      .def_prop_ro("bone_count", [](const ModelHandle &h) { return h.data.boneCount; })
+      .def("__repr__", [](const ModelHandle &h) {
+        return "Model(mesh_count=" + std::to_string(h.data.meshCount) +
+               ", material_count=" + std::to_string(h.data.materialCount) + ")";
+      });
+
   m.def(
       "load_image", [](const std::string &path) { return ImageHandle(LoadImage(path.c_str())); },
       nb::arg("path"));
@@ -274,6 +366,51 @@ NB_MODULE(_beam, m) {
   m.def(
       "load_sound", [](const std::string &path) { return SoundHandle(LoadSound(path.c_str())); },
       nb::arg("path"));
+  m.def(
+      "load_music",
+      [](const std::string &path) { return MusicHandle(LoadMusicStream(path.c_str())); },
+      nb::arg("path"));
+  m.def(
+      "load_model", [](const std::string &path) { return ModelHandle(LoadModel(path.c_str())); },
+      nb::arg("path"));
+  m.def(
+      "load_material_default", []() { return MaterialHandle(LoadMaterialDefault()); });
+  m.def(
+      "gen_mesh_cube",
+      [](float width, float height, float length) {
+        return MeshHandle(GenMeshCube(width, height, length));
+      },
+      nb::arg("width"), nb::arg("height"), nb::arg("length"));
+  m.def(
+      "gen_mesh_sphere",
+      [](float radius, int rings, int slices) {
+        return MeshHandle(GenMeshSphere(radius, rings, slices));
+      },
+      nb::arg("radius"), nb::arg("rings") = 16, nb::arg("slices") = 16);
+  m.def(
+      "gen_mesh_cylinder",
+      [](float radius, float height, int slices) {
+        return MeshHandle(GenMeshCylinder(radius, height, slices));
+      },
+      nb::arg("radius"), nb::arg("height"), nb::arg("slices") = 16);
+  m.def(
+      "gen_mesh_cone",
+      [](float radius, float height, int slices) {
+        return MeshHandle(GenMeshCone(radius, height, slices));
+      },
+      nb::arg("radius"), nb::arg("height"), nb::arg("slices") = 16);
+  m.def(
+      "gen_mesh_torus",
+      [](float radius, float size, int radSeg, int sides) {
+        return MeshHandle(GenMeshTorus(radius, size, radSeg, sides));
+      },
+      nb::arg("radius"), nb::arg("size"), nb::arg("rad_seg") = 16, nb::arg("sides") = 16);
+  m.def(
+      "gen_mesh_plane",
+      [](float width, float length, int resX, int resZ) {
+        return MeshHandle(GenMeshPlane(width, length, resX, resZ));
+      },
+      nb::arg("width"), nb::arg("length"), nb::arg("res_x") = 1, nb::arg("res_z") = 1);
   m.def(
       "load_texture_from_image",
       [](const ImageHandle &image) { return TextureHandle(LoadTextureFromImage(image.data)); },
@@ -323,6 +460,34 @@ NB_MODULE(_beam, m) {
           },
           nb::arg("name"), nb::arg("value"))
       .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, MusicHandle &music) {
+            self.setAsset<Music>(name, music.data);
+            music.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, MeshHandle &mesh) {
+            self.setAsset<Mesh>(name, mesh.data);
+            mesh.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, MaterialHandle &material) {
+            self.setAsset<Material>(name, material.data);
+            material.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
+          "set_asset",
+          [](Manager &self, const std::string &name, ModelHandle &model) {
+            self.setAsset<Model>(name, model.data);
+            model.disown();
+          },
+          nb::arg("name"), nb::arg("value"))
+      .def(
           "get_image_asset",
           [](Manager &self, const std::string &name) {
             return ImageHandle(self.getAsset<Image>(name), /*owned_=*/false);
@@ -344,6 +509,30 @@ NB_MODULE(_beam, m) {
           "get_sound_asset",
           [](Manager &self, const std::string &name) {
             return SoundHandle(self.getAsset<Sound>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_music_asset",
+          [](Manager &self, const std::string &name) {
+            return MusicHandle(self.getAsset<Music>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_mesh_asset",
+          [](Manager &self, const std::string &name) {
+            return MeshHandle(self.getAsset<Mesh>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_material_asset",
+          [](Manager &self, const std::string &name) {
+            return MaterialHandle(self.getAsset<Material>(name), /*owned_=*/false);
+          },
+          nb::arg("name"))
+      .def(
+          "get_model_asset",
+          [](Manager &self, const std::string &name) {
+            return ModelHandle(self.getAsset<Model>(name), /*owned_=*/false);
           },
           nb::arg("name"))
       .def("close", &Manager::close)
@@ -1242,6 +1431,202 @@ NB_MODULE(_beam, m) {
       .def("get_total_tile_count", &TileMap::getTotalTileCount)
       .def("regenerate_area", &TileMap::regenerateArea, nb::arg("start_x"), nb::arg("start_y"),
            nb::arg("width"), nb::arg("height"));
+
+  // -- 3D objects -----------------------------------------------------------
+
+  // Matrix is only ever handed back from getViewMatrix(); Python code
+  // typically just forwards it elsewhere rather than poking at individual
+  // cells, so this only exposes it as a flat list of its 16 raylib fields
+  // (column-major, matching raylib's own memory layout).
+  nb::class_<Matrix>(m, "Matrix").def_prop_ro("values", [](const Matrix &mat) {
+    return std::vector<float>{mat.m0,  mat.m1,  mat.m2,  mat.m3,  mat.m4,  mat.m5,
+                               mat.m6,  mat.m7,  mat.m8,  mat.m9,  mat.m10, mat.m11,
+                               mat.m12, mat.m13, mat.m14, mat.m15};
+  });
+
+  nb::class_<Object3D, GameObject>(m, "Object3D")
+      .def(nb::init<const std::string &, Vector3, Vector3, float, Vector3, Color>(),
+           nb::arg("name"), nb::arg("position"), nb::arg("rotation_axis") = Vector3{0.0f, 1.0f, 0.0f},
+           nb::arg("rotation_angle") = 0.0f, nb::arg("scale") = Vector3{1.0f, 1.0f, 1.0f},
+           nb::arg("tint") = Color{255, 255, 255, 255})
+      .def("set_position", &Object3D::setPosition, nb::arg("position"))
+      .def("set_rotation_axis", &Object3D::setRotationAxis, nb::arg("rotation_axis"))
+      .def("set_rotation_angle", &Object3D::setRotationAngle, nb::arg("rotation_angle"))
+      .def("set_scale", &Object3D::setScale, nb::arg("scale"))
+      .def("set_tint", &Object3D::setTint, nb::arg("tint"))
+      .def("get_position", &Object3D::getPosition)
+      .def("get_rotation_axis", &Object3D::getRotationAxis)
+      .def("get_rotation_angle", &Object3D::getRotationAngle)
+      .def("get_scale", &Object3D::getScale)
+      .def("get_tint", &Object3D::getTint)
+      .def("get_bounding_box", &Object3D::getBoundingBox)
+      .def("check_ray_collision", &Object3D::checkRayCollision, nb::arg("ray"))
+      .def("collides_with", &Object3D::collidesWith, nb::arg("other"));
+
+  nb::class_<Cube3D, Object3D>(m, "Cube3D")
+      .def(nb::init<const std::string &, Vector3, Vector3, Color, bool, Color>(),
+           nb::arg("name"), nb::arg("position"), nb::arg("size"),
+           nb::arg("tint") = Color{255, 255, 255, 255}, nb::arg("wireframe") = false,
+           nb::arg("wire_color") = Color{0, 0, 0, 255})
+      .def("set_size", &Cube3D::setSize, nb::arg("size"))
+      .def("set_wireframe", &Cube3D::setWireframe, nb::arg("wireframe"))
+      .def("set_wire_color", &Cube3D::setWireColor, nb::arg("wire_color"))
+      .def("get_size", &Cube3D::getSize)
+      .def("is_wireframe", &Cube3D::isWireframe)
+      .def("get_wire_color", &Cube3D::getWireColor)
+      .def("on_update", &Cube3D::onUpdate, nb::arg("callback"))
+      .def("on_draw", &Cube3D::onDraw, nb::arg("callback"));
+
+  nb::class_<Mesh3D, Object3D>(m, "Mesh3D")
+      .def(nb::init<SharedManager, const std::string &, const std::string &, Mesh, Vector3,
+                     Vector3, float, Vector3, Color, bool>(),
+           nb::arg("manager"), nb::arg("name"), nb::arg("cache_key"), nb::arg("mesh"),
+           nb::arg("position"), nb::arg("rotation_axis") = Vector3{0.0f, 1.0f, 0.0f},
+           nb::arg("rotation_angle") = 0.0f, nb::arg("scale") = Vector3{1.0f, 1.0f, 1.0f},
+           nb::arg("tint") = Color{255, 255, 255, 255}, nb::arg("wireframe") = false)
+      .def("set_wireframe", &Mesh3D::setWireframe, nb::arg("wireframe"))
+      .def("is_wireframe", &Mesh3D::isWireframe)
+      .def("on_update", &Mesh3D::onUpdate, nb::arg("callback"))
+      .def("on_draw", &Mesh3D::onDraw, nb::arg("callback"));
+
+  nb::class_<Model3D, Object3D>(m, "Model3D")
+      .def(nb::init<SharedManager, const std::string &, const std::string &, Vector3, Vector3,
+                     float, Vector3, Color, bool>(),
+           nb::arg("manager"), nb::arg("name"), nb::arg("model_path"), nb::arg("position"),
+           nb::arg("rotation_axis") = Vector3{0.0f, 1.0f, 0.0f}, nb::arg("rotation_angle") = 0.0f,
+           nb::arg("scale") = Vector3{1.0f, 1.0f, 1.0f},
+           nb::arg("tint") = Color{255, 255, 255, 255}, nb::arg("wireframe") = false)
+      .def("set_wireframe", &Model3D::setWireframe, nb::arg("wireframe"))
+      .def("is_wireframe", &Model3D::isWireframe)
+      .def("load_animations", &Model3D::loadAnimations, nb::arg("manager"), nb::arg("animation_path"))
+      .def("get_animation_names", &Model3D::getAnimationNames)
+      .def("play_animation", &Model3D::playAnimation, nb::arg("name"), nb::arg("loop") = true,
+           nb::arg("speed") = 1.0f)
+      .def("crossfade_to", &Model3D::crossfadeTo, nb::arg("name"), nb::arg("duration"),
+           nb::arg("loop") = true, nb::arg("speed") = 1.0f)
+      .def("pause_animation", &Model3D::pauseAnimation)
+      .def("resume_animation", &Model3D::resumeAnimation)
+      .def("get_current_animation", &Model3D::getCurrentAnimation)
+      .def("is_crossfading", &Model3D::isCrossfading)
+      .def("get_blend_factor", &Model3D::getBlendFactor)
+      .def("set_animation_fps", &Model3D::setAnimationFPS, nb::arg("fps"))
+      .def("get_bone_count", &Model3D::getBoneCount)
+      .def("get_bone_name", &Model3D::getBoneName, nb::arg("index"))
+      .def("get_bone_parent", &Model3D::getBoneParent, nb::arg("index"))
+      .def("on_update", &Model3D::onUpdate, nb::arg("callback"))
+      .def("on_draw", &Model3D::onDraw, nb::arg("callback"));
+
+  nb::class_<beam::Camera3D, GameObject>(m, "Camera3D")
+      .def(nb::init<const std::string &, Vector3, Vector3, Vector3, float, int, int>(),
+           nb::arg("name"), nb::arg("position"), nb::arg("target"),
+           nb::arg("up") = Vector3{0.0f, 1.0f, 0.0f}, nb::arg("fovy") = 45.0f,
+           nb::arg("projection") = static_cast<int>(CAMERA_PERSPECTIVE),
+           nb::arg("mode") = static_cast<int>(CAMERA_CUSTOM))
+      .def(
+          "add",
+          [](std::shared_ptr<beam::Camera3D> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def(
+          "__lshift__",
+          [](std::shared_ptr<beam::Camera3D> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def("set_position", &beam::Camera3D::setPosition, nb::arg("position"))
+      .def("set_target", &beam::Camera3D::setTarget, nb::arg("target"))
+      .def("set_up", &beam::Camera3D::setUp, nb::arg("up"))
+      .def("set_fovy", &beam::Camera3D::setFovy, nb::arg("fovy"))
+      .def("set_projection", &beam::Camera3D::setProjection, nb::arg("projection"))
+      .def("set_mode", &beam::Camera3D::setMode, nb::arg("mode"))
+      .def("get_position", &beam::Camera3D::getPosition)
+      .def("get_target", &beam::Camera3D::getTarget)
+      .def("get_up", &beam::Camera3D::getUp)
+      .def("get_fovy", &beam::Camera3D::getFovy)
+      .def("get_projection", &beam::Camera3D::getProjection)
+      .def("get_mode", &beam::Camera3D::getMode)
+      .def("get_view_matrix", &beam::Camera3D::getViewMatrix)
+      .def("world_to_screen", &beam::Camera3D::worldToScreen, nb::arg("point"))
+      .def("screen_to_world_ray", &beam::Camera3D::screenToWorldRay, nb::arg("point"))
+      .def("on_update", &beam::Camera3D::onUpdate, nb::arg("callback"))
+      .def("on_draw", &beam::Camera3D::onDraw, nb::arg("callback"));
+
+  nb::class_<beam::Camera2D, GameObject>(m, "Camera2D")
+      .def(nb::init<const std::string &, Vector2, Vector2, float, float>(), nb::arg("name"),
+           nb::arg("offset"), nb::arg("target"), nb::arg("rotation") = 0.0f,
+           nb::arg("zoom") = 1.0f)
+      .def(
+          "add",
+          [](std::shared_ptr<beam::Camera2D> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def(
+          "__lshift__",
+          [](std::shared_ptr<beam::Camera2D> self, std::shared_ptr<GameObject> child) {
+            *self << child;
+            return self;
+          },
+          nb::arg("child"))
+      .def("set_offset", &beam::Camera2D::setOffset, nb::arg("offset"))
+      .def("set_target", &beam::Camera2D::setTarget, nb::arg("target"))
+      .def("set_rotation", &beam::Camera2D::setRotation, nb::arg("rotation"))
+      .def("set_zoom", &beam::Camera2D::setZoom, nb::arg("zoom"))
+      .def("get_offset", &beam::Camera2D::getOffset)
+      .def("get_target", &beam::Camera2D::getTarget)
+      .def("get_rotation", &beam::Camera2D::getRotation)
+      .def("get_zoom", &beam::Camera2D::getZoom)
+      .def("get_view_matrix", &beam::Camera2D::getViewMatrix)
+      .def("world_to_screen", &beam::Camera2D::worldToScreen, nb::arg("point"))
+      .def("screen_to_world", &beam::Camera2D::screenToWorld, nb::arg("point"))
+      .def("on_update", &beam::Camera2D::onUpdate, nb::arg("callback"))
+      .def("on_draw", &beam::Camera2D::onDraw, nb::arg("callback"));
+
+  // -- audio ------------------------------------------------------------
+
+  nb::class_<AudioSource, GameObject>(m, "AudioSource")
+      .def(nb::init<SharedManager, const std::string &, const std::string &, float, float,
+                     float>(),
+           nb::arg("manager"), nb::arg("name"), nb::arg("sound_path"), nb::arg("volume") = 1.0f,
+           nb::arg("pitch") = 1.0f, nb::arg("pan") = 0.5f)
+      .def("play", &AudioSource::play)
+      .def("stop", &AudioSource::stop)
+      .def("pause", &AudioSource::pause)
+      .def("resume", &AudioSource::resume)
+      .def("is_playing", &AudioSource::isPlaying)
+      .def("set_volume", &AudioSource::setVolume, nb::arg("volume"))
+      .def("set_pitch", &AudioSource::setPitch, nb::arg("pitch"))
+      .def("set_pan", &AudioSource::setPan, nb::arg("pan"))
+      .def("get_volume", &AudioSource::getVolume)
+      .def("get_pitch", &AudioSource::getPitch)
+      .def("get_pan", &AudioSource::getPan)
+      .def("on_update", &AudioSource::onUpdate, nb::arg("callback"));
+
+  nb::class_<MusicPlayer, GameObject>(m, "MusicPlayer")
+      .def(nb::init<SharedManager, const std::string &, const std::string &, bool, float, float,
+                     float>(),
+           nb::arg("manager"), nb::arg("name"), nb::arg("music_path"), nb::arg("looping") = true,
+           nb::arg("volume") = 1.0f, nb::arg("pitch") = 1.0f, nb::arg("pan") = 0.5f)
+      .def("play", &MusicPlayer::play)
+      .def("stop", &MusicPlayer::stop)
+      .def("pause", &MusicPlayer::pause)
+      .def("resume", &MusicPlayer::resume)
+      .def("is_playing", &MusicPlayer::isPlaying)
+      .def("set_looping", &MusicPlayer::setLooping, nb::arg("looping"))
+      .def("is_looping", &MusicPlayer::isLooping)
+      .def("set_volume", &MusicPlayer::setVolume, nb::arg("volume"))
+      .def("set_pitch", &MusicPlayer::setPitch, nb::arg("pitch"))
+      .def("set_pan", &MusicPlayer::setPan, nb::arg("pan"))
+      .def("get_volume", &MusicPlayer::getVolume)
+      .def("get_pitch", &MusicPlayer::getPitch)
+      .def("get_pan", &MusicPlayer::getPan)
+      .def("get_time_played", &MusicPlayer::getTimePlayed)
+      .def("get_time_length", &MusicPlayer::getTimeLength)
+      .def("on_update", &MusicPlayer::onUpdate, nb::arg("callback"));
 
   // -- app --------------------------------------------------------------
 

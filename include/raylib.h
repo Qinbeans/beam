@@ -2377,7 +2377,13 @@ RLAPI ModelAnimation *
 LoadModelAnimations(const char *fileName,
                     int *animCount); // Load model animations from file
 RLAPI void UpdateModelAnimation(Model model, ModelAnimation anim,
-                                int frame); // Update model animation pose
+                                float frame); // Update model animation pose
+                                              // (vertex buffers and bone
+                                              // matrices)
+RLAPI void UpdateModelAnimationEx(
+    Model model, ModelAnimation animA, float frameA, ModelAnimation animB,
+    float frameB,
+    float blend); // Update model animation pose, blending two animations
 RLAPI void UnloadModelAnimation(ModelAnimation anim); // Unload animation data
 RLAPI void UnloadModelAnimations(ModelAnimation *animations,
                                  int animCount); // Unload animation array data

@@ -179,6 +179,14 @@ set(BEAM_OBJECTS_SOURCES
     src/objects/color_panel.cpp
     src/objects/color_bar_alpha.cpp
     src/objects/color_bar_hue.cpp
+    src/objects/object3d.cpp
+    src/objects/cube3d.cpp
+    src/objects/camera3d.cpp
+    src/objects/camera2d.cpp
+    src/objects/audio_source.cpp
+    src/objects/music_player.cpp
+    src/objects/mesh3d.cpp
+    src/objects/model3d.cpp
 )
 
 # Create library

@@ -16,6 +16,17 @@ private:
   std::unordered_map<std::string, std::any> states;
   Color bg;
   bool isclosed;
+  bool audioDeviceReady;
+
+  // Lazily starts raylib's audio device the first time a Sound/Music asset
+  // is stored, so apps that never use audio never pay InitAudioDevice's
+  // cost. Safe to call more than once; only the first call does anything.
+  void ensureAudioDevice() {
+    if (!audioDeviceReady) {
+      InitAudioDevice();
+      audioDeviceReady = true;
+    }
+  }
 
   // Helper template to map raylib types to asset types
   template <typename T> struct AssetTypeMap {
@@ -23,7 +34,7 @@ private:
   };
 
 public:
-  Manager() : bg(RAYWHITE), isclosed(false) {}
+  Manager() : bg(RAYWHITE), isclosed(false), audioDeviceReady(false) {}
 
   // Manager owns Assets via unique_ptr and is always shared through
   // SharedManager; deleting these explicitly (rather than leaving them
@@ -31,6 +42,18 @@ public:
   // asset map's copy constructor just to determine copyability.
   Manager(const Manager &) = delete;
   Manager &operator=(const Manager &) = delete;
+
+  // Shuts down the audio device if ensureAudioDevice() ever started it.
+  // A destructor body runs *before* member destruction, so `assets` (which
+  // may own Sound/Music resources whose dtors call UnloadSound/
+  // UnloadMusicStream) is cleared explicitly here first, ensuring every
+  // audio asset is unloaded while the device is still open.
+  ~Manager() {
+    assets.clear();
+    if (audioDeviceReady) {
+      CloseAudioDevice();
+    }
+  }
 
   bool hasAsset(const std::string &name) {
     return !assets.empty() && assets.find(name) != assets.end();
@@ -62,6 +85,26 @@ public:
       if (!asset)
         throw std::runtime_error("Asset is not a Sound");
       return asset->data;
+    } else if constexpr (std::is_same_v<T, Music>) {
+      auto *asset = it->second->asMusic();
+      if (!asset)
+        throw std::runtime_error("Asset is not a Music");
+      return asset->data;
+    } else if constexpr (std::is_same_v<T, Mesh>) {
+      auto *asset = it->second->asMesh();
+      if (!asset)
+        throw std::runtime_error("Asset is not a Mesh");
+      return asset->data;
+    } else if constexpr (std::is_same_v<T, Material>) {
+      auto *asset = it->second->asMaterial();
+      if (!asset)
+        throw std::runtime_error("Asset is not a Material");
+      return asset->data;
+    } else if constexpr (std::is_same_v<T, Model>) {
+      auto *asset = it->second->asModel();
+      if (!asset)
+        throw std::runtime_error("Asset is not a Model");
+      return asset->data;
     } else {
       static_assert(always_false<T>::value, "Unsupported asset type");
     }
@@ -75,7 +118,17 @@ public:
     } else if constexpr (std::is_same_v<T, Font>) {
       assets[name] = std::make_unique<FontAsset>(asset);
     } else if constexpr (std::is_same_v<T, Sound>) {
+      ensureAudioDevice();
       assets[name] = std::make_unique<SoundAsset>(asset);
+    } else if constexpr (std::is_same_v<T, Music>) {
+      ensureAudioDevice();
+      assets[name] = std::make_unique<MusicAsset>(asset);
+    } else if constexpr (std::is_same_v<T, Mesh>) {
+      assets[name] = std::make_unique<MeshAsset>(asset);
+    } else if constexpr (std::is_same_v<T, Material>) {
+      assets[name] = std::make_unique<MaterialAsset>(asset);
+    } else if constexpr (std::is_same_v<T, Model>) {
+      assets[name] = std::make_unique<ModelAsset>(asset);
     } else {
       static_assert(always_false<T>::value, "Unsupported asset type");
     }
@@ -87,6 +140,27 @@ public:
 
   template <typename T> void setState(const std::string &name, T value) {
     states[name] = value;
+  }
+
+  // Model animation clips are a pointer+count pair (raylib's
+  // LoadModelAnimations returns a heap array), not a single copyable
+  // raylib value struct, so they don't fit the getAsset<T>/setAsset<T>
+  // pattern used above and get their own accessors instead.
+  void setAnimations(const std::string &name, ModelAnimation *animations,
+                      int count) {
+    assets[name] = std::make_unique<ModelAnimationAsset>(animations, count);
+  }
+
+  ModelAnimation *getAnimations(const std::string &name, int &count) {
+    auto it = assets.find(name);
+    if (it == assets.end()) {
+      throw std::runtime_error("Asset not found: " + name);
+    }
+    auto *asset = it->second->asModelAnimation();
+    if (!asset)
+      throw std::runtime_error("Asset is not a ModelAnimation set");
+    count = asset->count;
+    return asset->data;
   }
 
   void close() { isclosed = true; }
