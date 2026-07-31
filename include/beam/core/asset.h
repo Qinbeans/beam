@@ -37,6 +37,13 @@ public:
   virtual ModelAnimationAsset *asModelAnimation() { return nullptr; }
 };
 
+// Unloading a GPU-backed asset talks to the graphics driver, so it is only
+// valid while the window is up. Assets routinely outlive it: a Manager owned
+// by a Python interpreter is destroyed during teardown, which happens after
+// raylib has closed the window and torn the GL context out with it. Releasing
+// then is a use-after-free, and there is nothing left to release anyway.
+inline bool canReleaseGpuAsset() { return IsWindowReady(); }
+
 // Concrete asset types
 class ImageAsset : public Asset {
 public:
@@ -57,7 +64,10 @@ public:
   Texture2D data;
 
   explicit TextureAsset(const Texture2D &tex) : data(tex) {}
-  ~TextureAsset() { UnloadTexture(data); }
+  ~TextureAsset() {
+    if (canReleaseGpuAsset())
+      UnloadTexture(data);
+  }
 
   std::unique_ptr<Asset> clone() const override {
     return std::make_unique<TextureAsset>(data);
@@ -71,7 +81,10 @@ public:
   Font data;
 
   explicit FontAsset(const Font &f) : data(f) {}
-  ~FontAsset() { UnloadFont(data); }
+  ~FontAsset() {
+    if (canReleaseGpuAsset())
+      UnloadFont(data);
+  }
 
   std::unique_ptr<Asset> clone() const override {
     return std::make_unique<FontAsset>(data);
@@ -118,7 +131,10 @@ public:
   Mesh data;
 
   explicit MeshAsset(const Mesh &m) : data(m) {}
-  ~MeshAsset() { UnloadMesh(data); }
+  ~MeshAsset() {
+    if (canReleaseGpuAsset())
+      UnloadMesh(data);
+  }
 
   std::unique_ptr<Asset> clone() const override {
     return std::make_unique<MeshAsset>(data);
@@ -133,7 +149,10 @@ public:
   Material data;
 
   explicit MaterialAsset(const Material &m) : data(m) {}
-  ~MaterialAsset() { UnloadMaterial(data); }
+  ~MaterialAsset() {
+    if (canReleaseGpuAsset())
+      UnloadMaterial(data);
+  }
 
   std::unique_ptr<Asset> clone() const override {
     return std::make_unique<MaterialAsset>(data);
@@ -150,7 +169,10 @@ public:
   Model data;
 
   explicit ModelAsset(const Model &m) : data(m) {}
-  ~ModelAsset() { UnloadModel(data); }
+  ~ModelAsset() {
+    if (canReleaseGpuAsset())
+      UnloadModel(data);
+  }
 
   std::unique_ptr<Asset> clone() const override {
     return std::make_unique<ModelAsset>(data);
