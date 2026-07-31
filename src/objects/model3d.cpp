@@ -36,6 +36,10 @@ Model3D::Model3D(SharedManager manager, const std::string &name,
 
 void Model3D::draw(SharedManager manager) {
   GameObject::draw(manager);
+  // Camera3D draws its children unconditionally, so without this setActive
+  // (false) would set the flag and change nothing on screen.
+  if (!isActive())
+    return;
 
   // DrawModelEx can only express an axis/angle transform, which cannot carry a
   // pivot or a parent's transform. Fold the full world matrix into a local copy

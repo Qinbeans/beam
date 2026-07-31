@@ -42,6 +42,10 @@ Mesh3D::Mesh3D(SharedManager manager, const std::string &name,
 
 void Mesh3D::draw(SharedManager manager) {
   GameObject::draw(manager);
+  // Camera3D draws its children unconditionally, so without this setActive
+  // (false) would set the flag and change nothing on screen.
+  if (!isActive())
+    return;
 
   material.maps[MATERIAL_MAP_DIFFUSE].color = getTint();
 
