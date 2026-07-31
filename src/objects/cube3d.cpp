@@ -25,6 +25,10 @@ Cube3D::Cube3D(const std::string &name, Vector3 position, Vector3 size,
 
 void Cube3D::draw(SharedManager manager) {
   GameObject::draw(manager);
+  // Camera3D draws its children unconditionally, so without this setActive
+  // (false) would set the flag and change nothing on screen.
+  if (!isActive())
+    return;
 
   // DrawCubeV/DrawCubeWiresV take a position but no matrix, so they can't
   // express rotation, scale or a parent's transform on their own. Pushing the
