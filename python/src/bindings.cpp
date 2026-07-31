@@ -1663,6 +1663,15 @@ NB_MODULE(_beam, m) {
           nb::arg("position"), nb::arg("rotation_axis") = Vector3{0.0f, 1.0f, 0.0f},
           nb::arg("rotation_angle") = 0.0f, nb::arg("scale") = Vector3{1.0f, 1.0f, 1.0f},
           nb::arg("tint") = Color{255, 255, 255, 255}, nb::arg("wireframe") = false)
+      .def(
+          "set_mesh",
+          [](Mesh3D &self, SharedManager manager, const std::string &cacheKey,
+             MeshHandle &mesh) {
+            self.setMesh(manager, cacheKey, mesh.data);
+            // Mesh3D owns it now, via the Manager's asset registry.
+            mesh.disown();
+          },
+          nb::arg("manager"), nb::arg("cache_key"), nb::arg("mesh"))
       .def("set_wireframe", &Mesh3D::setWireframe, nb::arg("wireframe"))
       .def("is_wireframe", &Mesh3D::isWireframe)
       .def("on_update", &Mesh3D::onUpdate, nb::arg("callback"))

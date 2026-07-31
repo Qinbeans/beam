@@ -65,6 +65,22 @@ public:
   /// @brief Advance state and invoke the update callback, if any.
   void update(float, SharedManager) override;
 
+  /**
+   * @brief Replace this object's geometry, unloading whatever it drew before.
+   *
+   * The constructor deliberately *keeps* a cached mesh when its key is already
+   * taken, so several objects can share one upload. Rebuilding needs the
+   * opposite: this always replaces the asset stored under `cacheKey`, which
+   * unloads the mesh it displaced. Anything else still drawing that key would
+   * be left pointing at freed buffers, so give a shared shape its own key or
+   * rebuild every user of it.
+   *
+   * This is what makes editable geometry possible at all -- a voxel chunk that
+   * is dug into has to be remeshed, and without this the only options were
+   * leaking a node per edit or never changing the terrain.
+   */
+  void setMesh(SharedManager manager, const std::string &cacheKey, Mesh newMesh);
+
   /// @brief Enable/disable wireframe rendering.
   void setWireframe(bool wireframe);
   /// @brief Whether wireframe rendering is enabled.

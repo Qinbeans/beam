@@ -67,6 +67,16 @@ void Mesh3D::update(float delta, SharedManager manager) {
   }
 }
 
+void Mesh3D::setMesh(SharedManager manager, const std::string &cacheKey,
+                     Mesh newMesh) {
+  std::string meshKey = cacheKey + "Mesh";
+  // Assigning over the entry destroys the asset it held, which unloads the old
+  // mesh's GPU buffers; `mesh` is repointed immediately after, so it never
+  // refers to the freed one.
+  manager->setAsset<Mesh>(meshKey, newMesh);
+  mesh = manager->getAsset<Mesh>(meshKey);
+}
+
 void Mesh3D::setWireframe(bool wireframe) { this->wireframe = wireframe; }
 
 bool Mesh3D::isWireframe() const { return wireframe; }

@@ -2714,6 +2714,19 @@ class Mesh3D(Object3D):
     ) -> None:
         """Construct a new `Mesh3D`."""
         ...
+    def set_mesh(self, manager: Manager, cache_key: str, mesh: Mesh) -> None:
+        """Replace this object's geometry, unloading whatever it drew before.
+
+        The constructor keeps a cached mesh when its key is already taken, so
+        several objects can share one upload. Rebuilding needs the opposite:
+        this always replaces the asset under `cache_key` and unloads the mesh it
+        displaced, so anything else still drawing that key would be left
+        pointing at freed buffers.
+
+        This is what makes editable geometry possible -- a voxel chunk that is
+        dug into has to be remeshed.
+        """
+        ...
     def set_wireframe(self, wireframe: bool) -> None:
         """Set the wireframe."""
         ...
