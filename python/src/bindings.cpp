@@ -155,7 +155,13 @@ template <typename T, void (*Unload)(T)> struct AssetHandle {
 
 private:
   void release() {
-    if (owned)
+    // Unloading a GPU-backed asset talks to the graphics driver, so it is only
+    // valid while the window is up. Python decides when its objects die, and at
+    // interpreter shutdown that is routinely *after* the window has closed --
+    // so a Mesh still referenced when the script ends would unload its VAO
+    // against a destroyed GL context and segfault. There is nothing to release
+    // at that point anyway: raylib tears the context down with the window.
+    if (owned && IsWindowReady())
       Unload(data);
     owned = false;
   }
