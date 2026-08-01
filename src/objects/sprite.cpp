@@ -12,8 +12,23 @@ Sprite::Sprite(SharedManager manager, const std::string &name, Vector2 position,
   if (!manager->hasAsset(textureName)) {
     auto textureMap = manager->getAsset<Image>("textureMap");
     auto imageTexture = ImageFromImage(textureMap, bound);
-    ImageClearBackground(&imageTexture, bg);
+
+    // bg belongs *behind* the cut, not over it. ImageClearBackground fills the
+    // whole image, so calling it here overwrote the region that had just been
+    // cut out -- and since bg defaults to BLANK, every sprite ended up a
+    // rectangle of fully transparent pixels. It drew; it just drew nothing.
+    if (bg.a > 0) {
+      Image canvas = GenImageColor(static_cast<int>(bound.width),
+                                   static_cast<int>(bound.height), bg);
+      Rectangle whole = {0.0f, 0.0f, bound.width, bound.height};
+      ImageDraw(&canvas, imageTexture, whole, whole, WHITE);
+      UnloadImage(imageTexture);
+      imageTexture = canvas;
+    }
+
     auto texture = LoadTextureFromImage(imageTexture);
+    // The pixels are on the GPU now, and this copy was ours to free.
+    UnloadImage(imageTexture);
     manager->setAsset<Texture2D>(textureName, texture);
   }
 }
