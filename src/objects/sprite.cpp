@@ -24,6 +24,11 @@ Sprite::~Sprite() {}
 
 void Sprite::draw(SharedManager manager) {
   GameObject::draw(manager);
+  // Every other 2D object checks this; Sprite was the one that did not, so
+  // setActive(false) set the flag and the sprite carried on drawing.
+  if (!active) {
+    return;
+  }
   auto texture = manager->getAsset<Texture2D>(name + "Texture");
   DrawTextureEx(texture, position, rotation, scale, tint);
   if (drawCallback) {
