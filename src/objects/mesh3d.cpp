@@ -74,6 +74,24 @@ void Mesh3D::update(float delta, SharedManager manager) {
 void Mesh3D::setMesh(SharedManager manager, const std::string &cacheKey,
                      Mesh newMesh) {
   std::string meshKey = cacheKey + "Mesh";
+
+  // Handing back the mesh a key already holds has to be a no-op. Assigning over
+  // the entry destroys the asset it held first, so re-registering a mesh under
+  // its own key unloads that mesh's GPU buffers and then stores the handle that
+  // was just freed -- and the second free comes at shutdown.
+  //
+  // This is what stops a caller cycling between meshes it uploaded up front,
+  // which is how you animate geometry without rebuilding it: park each frame
+  // under its own key, then set them in turn. That works exactly once round the
+  // loop and then double-frees on the first repeat.
+  if (manager->hasAsset(meshKey)) {
+    Mesh existing = manager->getAsset<Mesh>(meshKey);
+    if (existing.vaoId == newMesh.vaoId) {
+      mesh = existing;
+      return;
+    }
+  }
+
   // Assigning over the entry destroys the asset it held, which unloads the old
   // mesh's GPU buffers; `mesh` is repointed immediately after, so it never
   // refers to the freed one.
