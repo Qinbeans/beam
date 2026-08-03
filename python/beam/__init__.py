@@ -86,7 +86,10 @@ from ._beam import (
     gen_mesh_plane,
     gen_mesh_sphere,
     gen_mesh_torus,
+    get_gui_font,
+    get_gui_style,
     load_font,
+    load_font_ex,
     load_gui_style,
     load_image,
     load_material_default,
@@ -100,6 +103,8 @@ from ._beam import (
     log_info,
     log_warning,
     measure_text_ex,
+    set_gui_font,
+    set_gui_style,
     upload_mesh,
 )
 
@@ -184,7 +189,10 @@ __all__ = [
     "gen_mesh_plane",
     "gen_mesh_sphere",
     "gen_mesh_torus",
+    "get_gui_font",
+    "get_gui_style",
     "load_font",
+    "load_font_ex",
     "load_gui_style",
     "load_image",
     "load_material_default",
@@ -198,5 +206,7 @@ __all__ = [
     "log_info",
     "log_warning",
     "measure_text_ex",
+    "set_gui_font",
+    "set_gui_style",
     "upload_mesh",
 ]

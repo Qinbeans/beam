@@ -200,6 +200,14 @@ def load_texture(path: str) -> Texture:
 def load_font(path: str) -> Font:
     """Load a font from `path`."""
     ...
+
+def load_font_ex(path: str, font_size: int) -> Font:
+    """Load a font from `path`, rasterised at `font_size` pixels.
+
+    `load_font` bakes at 32 and scales everything else from it, which is soft
+    at interface sizes. This bakes at the size you will draw at.
+    """
+    ...
 def load_sound(path: str) -> Sound:
     """Load a sound effect from `path`."""
     ...
@@ -275,6 +283,27 @@ def measure_text_ex(
     ...
 def load_gui_style(path: str) -> None:
     """Load a raygui style file from `path` and apply it globally."""
+    ...
+
+def set_gui_font(font: Font) -> None:
+    """Draw every raygui widget in `font` from here on.
+
+    The font has to outlive the call: raygui keeps it. Register it with a
+    `Manager` and pass what `get_font_asset` returns, which is borrowed and
+    stays alive as long as the manager holds it.
+    """
+    ...
+
+def get_gui_font() -> Font:
+    """The font raygui is currently drawing with. Borrowed, not owned."""
+    ...
+
+def set_gui_style(control: int, property: int, value: int) -> None:
+    """Set one raygui style property. Ints are raygui's own vocabulary."""
+    ...
+
+def get_gui_style(control: int, property: int) -> int:
+    """Read one raygui style property."""
     ...
 
 # -- core ---------------------------------------------------------------

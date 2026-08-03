@@ -420,6 +420,15 @@ NB_MODULE(_beam, m) {
   m.def(
       "load_font", [](const std::string &path) { return FontHandle(LoadFont(path.c_str())); },
       nb::arg("path"));
+  // LoadFont rasterises at a fixed 32px and everything else is a scale of that,
+  // which is soft wherever the interface is smaller -- and interface text
+  // usually is. This takes the size the glyphs are actually baked at.
+  m.def(
+      "load_font_ex",
+      [](const std::string &path, int fontSize) {
+        return FontHandle(LoadFontEx(path.c_str(), fontSize, nullptr, 0));
+      },
+      nb::arg("path"), nb::arg("font_size"));
   m.def(
       "load_sound", [](const std::string &path) { return SoundHandle(LoadSound(path.c_str())); },
       nb::arg("path"));
@@ -562,6 +571,34 @@ NB_MODULE(_beam, m) {
   m.def(
       "load_gui_style", [](const std::string &path) { GuiLoadStyle(path.c_str()); },
       nb::arg("path"));
+  // The whole raygui layer draws with one font, and until now the only way to
+  // choose it was per widget -- which left the widgets that have no fontName at
+  // all (DummyRec, StatusBar, GroupBox) stuck with the built-in face while
+  // everything beside them was in the interface font. Set it once instead.
+  // raygui keeps the Font it is given and draws with it from here on, so the
+  // font has to outlive this call. Register it with a Manager first and pass
+  // what get_font_asset hands back -- that handle is borrowed and the Manager
+  // is what keeps the glyphs alive. Passing a freshly loaded font straight in
+  // works right up until Python collects it.
+  m.def(
+      "set_gui_font", [](const FontHandle &font) { GuiSetFont(font.data); },
+      nb::arg("font"));
+  // Borrowed, not owned: raygui holds this font and goes on drawing with it.
+  // An owning handle would unload it the moment Python let go of the object,
+  // and every widget after that would draw with freed glyphs.
+  m.def("get_gui_font", []() { return FontHandle(GuiGetFont(), false); });
+  // The rest of a raygui theme: sizes, spacings, colours, per control. Ints on
+  // both sides because that is raygui's own vocabulary -- the enums are plain
+  // integers there, and inventing names for them here would be a second set to
+  // keep in step with theirs.
+  m.def(
+      "set_gui_style",
+      [](int control, int property, int value) { GuiSetStyle(control, property, value); },
+      nb::arg("control"), nb::arg("property"), nb::arg("value"));
+  m.def(
+      "get_gui_style",
+      [](int control, int property) { return GuiGetStyle(control, property); },
+      nb::arg("control"), nb::arg("property"));
 
   // -- core -------------------------------------------------------------
 
