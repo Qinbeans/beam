@@ -837,6 +837,8 @@ NB_MODULE(_beam, m) {
       .def("set_bg_hover_color", &Button::setBgHoverColor, nb::arg("color"))
       .def("set_fg_hover_color", &Button::setFgHoverColor, nb::arg("color"))
       .def("get_bounds", &Button::getBounds)
+      .def("get_size", &Button::getSize)
+      .def("get_padding", &Button::getPadding)
       .def("is_hovered", &Button::isHovered)
       .def("is_clicked", &Button::isClicked)
       .def("on_update", &Button::onUpdate, nb::arg("callback"))

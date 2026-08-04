@@ -59,6 +59,13 @@ const Rectangle Button::getBounds() const {
           static_cast<float>(size.y + padding.top + padding.bottom)};
 }
 
+Vector2 Button::getSize() const {
+  const Rectangle bounds = getBounds();
+  return {bounds.width, bounds.height};
+}
+
+Padding Button::getPadding() const { return padding; }
+
 bool Button::isHovered() const {
   return CheckCollisionPointRec(GetMousePosition(), getBounds());
 }
