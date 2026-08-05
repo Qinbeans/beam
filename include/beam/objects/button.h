@@ -52,6 +52,25 @@ public:
 
   const Rectangle getBounds() const;
 
+  /**
+   * @brief Get how big the button is on screen
+   *
+   * The size it was given plus its padding: the rectangle that is drawn,
+   * hovered and clicked, and the same dimensions getBounds() reports.
+   *
+   * Deliberately not the Vector2 handed to setSize(). That one is the box the
+   * label sits in, and a column of buttons laid out with it stacks them closer
+   * together than they are drawn -- neighbours overlap by the padding, both are
+   * live in the overlap, and a click there goes to whichever is tested first.
+   * getPadding() recovers what setSize() was given.
+   */
+  Vector2 getSize() const;
+
+  /**
+   * @brief Get the space kept around the button's label
+   */
+  Padding getPadding() const;
+
   bool isHovered() const;
   bool isClicked() const;
 

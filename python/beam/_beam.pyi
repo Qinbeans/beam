@@ -629,6 +629,18 @@ class Button(GameObject):
     def get_bounds(self) -> Rectangle:
         """Return the bounding rectangle used for layout and input hit-testing."""
         ...
+    def get_size(self) -> Vector2:
+        """Return how big the button is on screen: its size plus its padding.
+
+        The rectangle that is drawn, hovered and clicked, and the same
+        dimensions as `get_bounds`. Not what was passed to `set_size`, which is
+        the box the label sits in -- a column laid out with that one stacks
+        closer together than it is drawn. `get_padding` recovers it.
+        """
+        ...
+    def get_padding(self) -> Padding:
+        """Return the space kept around the button's label."""
+        ...
     def is_hovered(self) -> bool:
         """Return True if hovered, otherwise False."""
         ...
